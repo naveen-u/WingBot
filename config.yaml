@@ -7,7 +7,7 @@ Bot:
         - anagrams
 
 Anagram:
-    Corpus: ../resources/words.json
+    Corpus: resources/words.json
     NoOfQuestions: 10
     QuestionLimit: 50
     TimeToFirstQuestion: 3
