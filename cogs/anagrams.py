@@ -215,11 +215,11 @@ class Anagrams(commands.Cog):
                 title = '`' + question + '`',
                 colour = discord.Colour.blue()
             )
-            self.channelStates[str(channel.id)]['question'].set_author(name = 'Question')
             if 'questionNumber' not in self.channelStates[str(channel.id)]:
                 self.channelStates[str(channel.id)]['questionNumber'] = 1
             else:
                 self.channelStates[str(channel.id)]['questionNumber'] += 1
+            self.channelStates[str(channel.id)]['question'].set_author(name = 'Question ' + str(self.channelStates[str(channel.id)]['questionNumber']))
             await channel.send(embed = self.channelStates[str(channel.id)]['question'])
             try:
                 answerTask = asyncio.create_task(self.revealAnswer(channel))
@@ -231,6 +231,8 @@ class Anagrams(commands.Cog):
                 traceback.print_exc()
         except asyncio.CancelledError:
             log(channel.id,'askQuestion task was cancelled')
+        except KeyError:
+            log(channel.id,'askQuestion task was interrupted by stop')
     
     async def revealAnswer(self, channel, waitTime = None, reason = 'Time\'s up!'):
         """
@@ -311,40 +313,42 @@ class Anagrams(commands.Cog):
         Parameters:
         channel (discord.TextChannel): Channel to send the message to.
         """
-        scores = sorted(self.channelStates[str(channel.id)]['scores'].items(), key=lambda x: x[1], reverse = True)
-        nameString = ''
-        scoreString = ''
-        avatar = ''
-        maxScore = -1
-        winnerString = 'Ruh-roh! No one got any points.'
-        showScores = False
-        if len(scores) > 0:
-            showScores = True
-            maxScore = scores[0][1]
-        if showScores:
-            if len(scores) == 1 or scores[0][1] != scores[1][1]:
-                winner = scores[0][0]
-                winnerString = winner.name + ' won the game!'
-                avatar = 'https://cdn.discordapp.com/avatars/' + str(winner.id) + '/' + str(winner.avatar) + '.png'
-            else:
-                winnerString = 'It\'s a tie!'
-            for user, score in scores:
-                if score == maxScore:
-                    nameString = nameString + '**' + user.name + '**\n'
-                    scoreString = scoreString + '**' + str(score) +'**\n'
+        if 'questionNumber' in self.channelStates[str(channel.id)]:
+            scores = sorted(self.channelStates[str(channel.id)]['scores'].items(), key=lambda x: x[1], reverse = True)
+            nameString = ''
+            scoreString = ''
+            avatar = ''
+            maxScore = -1
+            winnerString = 'Ruh-roh! No one got any points.'
+            showScores = False
+            noOfQuestions = self.channelStates[str(channel.id)]['questionNumber']
+            if len(scores) > 0:
+                showScores = True
+                maxScore = scores[0][1]
+            if showScores:
+                if len(scores) == 1 or scores[0][1] != scores[1][1]:
+                    winner = scores[0][0]
+                    winnerString = winner.name + ' won the game!'
+                    avatar = 'https://cdn.discordapp.com/avatars/' + str(winner.id) + '/' + str(winner.avatar) + '.png'
                 else:
-                    nameString = nameString + user.name + '\n'
-                    scoreString = scoreString + str(score) + '\n'
-        embed = discord.Embed(
-            title = winnerString,
-            colour = discord.Colour.blue()
-        )
-        embed.set_author(name = 'Game over', icon_url = avatar)
-        if showScores:
-            embed.add_field(name = 'Player', value = nameString)
-            embed.add_field(name = 'Score', value = scoreString)
-            embed.set_thumbnail(url = avatar)
-        await channel.send(embed = embed)
+                    winnerString = 'It\'s a tie!'
+                for user, score in scores:
+                    if score == maxScore:
+                        nameString = nameString + '**' + user.name + '**\n'
+                        scoreString = scoreString + '**' + str(round(score*100/noOfQuestions, 2)) +'**\n'
+                    else:
+                        nameString = nameString + user.name + '\n'
+                        scoreString = scoreString + str(round(score*100/noOfQuestions, 2)) + '\n'
+            embed = discord.Embed(
+                title = winnerString,
+                colour = discord.Colour.blue()
+            )
+            embed.set_author(name = 'Game over', icon_url = avatar)
+            if showScores:
+                embed.add_field(name = 'Player', value = nameString)
+                embed.add_field(name = 'Score', value = scoreString)
+                embed.set_thumbnail(url = avatar)
+            await channel.send(embed = embed)
         self.cleanTasks(str(channel.id))
         del self.channelStates[str(channel.id)]
         log(channel.id, 'Anagram game ended.')
