@@ -1,0 +1,18 @@
+---
+Bot:
+    CommandPrefix: '?'
+    Activity: '?help for help'
+    CogDirectory: cogs
+    Cogs:
+        - anagrams
+
+Anagram:
+    NoOfQuestions: 10
+    QuestionLimit: 50
+    TimeToFirstQuestion: 3
+    TimeToNextQuestion: 6
+    TimePerQuestion: 30
+    TimeToFirstHint: 10
+    TimeToSecondHint: 5
+    TimeToSecondHintShortWords: 13
+    ShortWordLengthCutoff: 7
