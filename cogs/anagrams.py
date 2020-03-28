@@ -163,7 +163,7 @@ class Anagrams(commands.Cog):
         numberOfQuestions (int): The number of questions in the game
         """
         if self.corpus is None:
-            with open('words.json') as fp:
+            with open(self.config.corpus) as fp:
                 self.corpus = json.load(fp)
         await self.getWordsFromCorpus(ctx, numberOfQuestions)
         self.channelStates[str(ctx.channel.id)]['scores'] = {}

@@ -36,7 +36,11 @@ class BotConfig(Config):
 class AnagramConfig(Config):
     def __init__(self):
         Config.__init__(self,'Anagram')
-
+    
+    @property
+    def corpus(self):
+        return self.get_property('Corpus')
+    
     @property
     def noOfQuestions(self):
         return int(self.get_property('NoOfQuestions'))
