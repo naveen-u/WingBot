@@ -5,7 +5,7 @@ import asyncio
 from concurrent.futures import CancelledError
 import traceback
 import json
-from utils.configManager import AnagramConfig
+from utils.configManager import AnagramConfig, BotConfig
 from utils.log import log
 
 class Anagrams(commands.Cog):
@@ -17,7 +17,8 @@ class Anagrams(commands.Cog):
         self.corpus = None
         self.channelStates = {}
         self.config = AnagramConfig()
-    
+        self.botConfig = BotConfig()
+
     @commands.command(name='anagram', aliases=['an'])
     async def anagram(self, ctx, numberOfQuestions = None):
         """
@@ -39,7 +40,7 @@ class Anagrams(commands.Cog):
         else:
             embed = discord.Embed(
                 title = 'There\'s already a game running in this channel',
-                description = 'Try running the command in another channel or stop the ongoing game with `$stop`.',
+                description = 'Try running the command in another channel or stop the ongoing game with `'+ self.botConfig.commandPrefix + 'stop`.',
                 colour = discord.Colour.red()
             )
             await ctx.send(embed = embed)
@@ -58,7 +59,7 @@ class Anagrams(commands.Cog):
             else:
                 embed = discord.Embed(
                     title = ctx.message.author.name + ' cancelled the game!',
-                    description = 'Type `$anagram` to start a new game.',
+                    description = 'Type `'+ self.botConfig.commandPrefix + 'anagram` to start a new game.',
                     colour = discord.Colour.red()
                 )
                 await ctx.send(embed = embed)
@@ -145,7 +146,7 @@ class Anagrams(commands.Cog):
         if str(channel.id) not in self.channelStates:
             embed = discord.Embed(
                 title = 'There are no games in progress',
-                description = 'Type `$anagram` to start a game.',
+                description = 'Type `' + self.botConfig.commandPrefix + 'anagram` to start a game.',
                 colour = discord.Colour.red()
             )
             await channel.send(embed = embed)
