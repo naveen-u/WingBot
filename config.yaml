@@ -5,9 +5,10 @@ Bot:
     CogDirectory: cogs
     Cogs:
         - anagrams
+        - garlic
 
 Anagram:
-    Corpus: resources/words.json
+    Corpus: resources/anagrams/words.json
     NoOfQuestions: 10
     QuestionLimit: 50
     TimeToFirstQuestion: 3
@@ -17,3 +18,8 @@ Anagram:
     TimeToSecondHint: 5
     TimeToSecondHintShortWords: 13
     ShortWordLengthCutoff: 7
+
+Garlic:
+    Template: resources/garlic/Template.jpeg
+    DarkTemplate: resources/garlic/DarkTemplate.png
+    Font: resources/garlic/CooperHewitt-Heavy.otf
