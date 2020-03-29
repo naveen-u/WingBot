@@ -64,6 +64,7 @@ class Anagrams(commands.Cog):
                 )
                 await ctx.send(embed = embed)
                 await self.publishScores(ctx.channel)
+                self.stopGame(ctx.channel)
     
     @commands.command(name='skip', aliases=['giveup', 'sk', 'lite'])
     async def skip(self, ctx):
@@ -84,6 +85,12 @@ class Anagrams(commands.Cog):
                 answerTask = asyncio.create_task(self.revealAnswer(ctx.channel, waitTime = 0, reason = 'Question skipped'))
                 answerTask.set_name('anagram-' + str(ctx.channel.id))
     
+    @commands.command(name='scores', alias=['points'])
+    async def scores(self, ctx):
+        """
+        Displays the scoreboard.
+        """
+        await self.publishScores(ctx.channel, False)
 
     @commands.Cog.listener()
     async def on_message(self,message):
@@ -203,6 +210,7 @@ class Anagrams(commands.Cog):
         try:
             if not self.channelStates[str(channel.id)]['words']:
                 await self.publishScores(channel)
+                self.stopGame(channel)
                 return
 
             await asyncio.sleep(waitTime)
@@ -306,7 +314,7 @@ class Anagrams(commands.Cog):
         except asyncio.CancelledError:
             log(channel.id, 'giveHint task was cancelled')
 
-    async def publishScores(self, channel):
+    async def publishScores(self, channel, gameEnded = True):
         """
         Publish the scores.
 
@@ -319,7 +327,10 @@ class Anagrams(commands.Cog):
             scoreString = ''
             avatar = ''
             maxScore = -1
-            winnerString = 'Ruh-roh! No one got any points.'
+            if gameEnded:
+                winnerString = 'Ruh-roh! No one got any points.'
+            else:
+                winnerString = 'No points so far.'
             showScores = False
             noOfQuestions = self.channelStates[str(channel.id)]['questionNumber']
             if len(scores) > 0:
@@ -328,10 +339,16 @@ class Anagrams(commands.Cog):
             if showScores:
                 if len(scores) == 1 or scores[0][1] != scores[1][1]:
                     winner = scores[0][0]
-                    winnerString = winner.name + ' won the game!'
+                    if gameEnded:
+                        winnerString = winner.name + ' won the game!'
+                    else:
+                        winnerString = winner.name + ' is in the lead!'
                     avatar = 'https://cdn.discordapp.com/avatars/' + str(winner.id) + '/' + str(winner.avatar) + '.png'
                 else:
-                    winnerString = 'It\'s a tie!'
+                    if gameEnded:
+                        winnerString = 'It\'s a tie!'
+                    else:
+                        winnerString = 'It\'s tied at the top!'
                 for user, score in scores:
                     if score == maxScore:
                         nameString = nameString + '**' + user.name + '**\n'
@@ -343,12 +360,18 @@ class Anagrams(commands.Cog):
                 title = winnerString,
                 colour = discord.Colour.blue()
             )
-            embed.set_author(name = 'Game over', icon_url = avatar)
+            if gameEnded:
+                embed.set_author(name = 'Game over', icon_url = avatar)
+            else:
+                embed.set_author(name = 'Scores so far', icon_url = avatar)
             if showScores:
                 embed.add_field(name = 'Player', value = nameString)
                 embed.add_field(name = 'Score', value = scoreString)
                 embed.set_thumbnail(url = avatar)
             await channel.send(embed = embed)
+        
+    
+    def stopGame(self, channel):
         self.cleanTasks(str(channel.id))
         del self.channelStates[str(channel.id)]
         log(channel.id, 'Anagram game ended.')
