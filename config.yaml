@@ -7,7 +7,6 @@ Bot:
         - anagrams
         - garlic
         - pokemon
-        - quiz
 
 Anagram:
     Corpus: resources/anagrams/words.json

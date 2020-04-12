@@ -1,6 +1,6 @@
 # Wing Bot
 
-A Discord bot to play anagrams and more!
+A Discord bot to play anagrams, "who's that Pokemon?", and more!
 
 ## Getting Started
 
