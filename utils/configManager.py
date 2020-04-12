@@ -92,3 +92,61 @@ class GarlicConfig(Config):
     @property
     def font(self):
         return self.get_property('Font')
+
+class PokemonConfig(Config):
+    def __init__(self):
+        Config.__init__(self,'Pokemon')
+
+    @property
+    def noOfQuestions(self):
+        return int(self.get_property('NoOfQuestions'))
+
+    @property
+    def questionLimit(self):
+        return int(self.get_property('QuestionLimit'))
+
+    @property
+    def timeToFirstQuestion(self):
+        return int(self.get_property('TimeToFirstQuestion'))
+
+    @property
+    def timeToNextQuestion(self):
+        return int(self.get_property('TimeToNextQuestion'))
+
+    @property
+    def timePerQuestion(self):
+        return int(self.get_property('TimePerQuestion'))
+
+    @property
+    def timeToFirstHint(self):
+        return int(self.get_property('TimeToFirstHint'))
+
+    @property
+    def timeToSecondHint(self):
+        return int(self.get_property('TimeToSecondHint'))
+
+    @property
+    def noOfPokemon(self):
+        return int(self.get_property('NoOfPokemon'))
+
+    @property
+    def pokemonDataAPI(self):
+        return self.get_property('PokemonDataAPI')
+
+    @property
+    def pokemonSpriteAPI(self):
+        return self.get_property('PokemonSpriteAPI')
+
+    @property
+    def typeToEmojiMap(self):
+        return self.get_property('TypeToEmojiMap')
+
+    def getEmoji(self, t: str):
+        return self.typeToEmojiMap[t]
+
+    @property
+    def regionWiseDex(self):
+        return self.get_property('RegionWiseDex')
+
+    def getRange(self, region: str):
+        return self.regionWiseDex[region]['start'], self.regionWiseDex[region]['end']

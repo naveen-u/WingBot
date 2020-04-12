@@ -19,7 +19,10 @@ async def on_ready():
     cogs = config.cogs
     cogDirectory = config.cogDirectory
     for cog in cogs:
-        bot.load_extension(cogDirectory + '.' + cog)
+        try:
+            bot.load_extension(cogDirectory + '.' + cog)
+        except commands.errors.ExtensionAlreadyLoaded:
+            pass
     return
 
 bot.run(TOKEN)

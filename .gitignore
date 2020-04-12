@@ -1,3 +1,8 @@
+# Temporary image files
+score.png
+sprite.png
+diygarlic.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
