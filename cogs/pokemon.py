@@ -28,7 +28,7 @@ class Pokemon(commands.Cog):
     @commands.group(name='pokemon', aliases = ['pm'], invoke_without_command = True, case_insensitive = True)
     async def pokemon(self, ctx, numberOfQuestions : typing.Optional[int], region : typing.Optional[str] = 'all'):
         """
-        Play "Who's that Pokémon?". If no subcommands are provided, it defaults to `start`.
+        Play "Who's that Pokémon?". If no subcommands are provided, it defaults to start.
         """
         await self.start(ctx, numberOfQuestions, region)
 
@@ -229,7 +229,7 @@ class Pokemon(commands.Cog):
                 log(ctx.channel.id, 'Got response ' + str(response.status_code) + ' for pokemon ' + str(i))
                 p = i
                 while p in pokeList or response.status_code != 200:
-                    p = random.randrange(1,self.config.noOfPokemon + 1)
+                    p = random.randrange(start,end + 1)
                     log(ctx.channel.id, 'Picked ' + str(p) + ' to replace ' + str(i))
                     response = requests.head(self.config.pokemonSpriteAPI.replace('{id}', str(p)))
                     log(ctx.channel.id, 'Got response ' + str(response.status_code) + ' for pokemon ' + str(p))
