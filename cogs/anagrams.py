@@ -7,6 +7,7 @@ import traceback
 import json
 from utils.configManager import AnagramConfig, BotConfig
 from utils.log import log
+import requests
 
 class Anagrams(commands.Cog):
     """
@@ -14,13 +15,21 @@ class Anagrams(commands.Cog):
     """
     def __init__(self, bot):
         self.bot = bot
-        self.corpus = None
         self.channelStates = {}
         self.config = AnagramConfig()
         self.botConfig = BotConfig()
-
-    @commands.command(name='anagram', aliases=['an'])
+        with open(self.config.corpus) as fp:
+            self.corpus = fp.read().splitlines()
+    
+    @commands.group(name='anagram', aliases = ['an'], invoke_without_command = True, case_insensitive = True)
     async def anagram(self, ctx, numberOfQuestions = None):
+        """
+        Play anagrams. If no subcommands are provided, it defaults to start.
+        """
+        await self.start(ctx, numberOfQuestions)
+
+    @anagram.command(name='start')
+    async def start(self, ctx, numberOfQuestions = None):
         """
         Starts a game of anagrams.
         """
@@ -45,7 +54,7 @@ class Anagrams(commands.Cog):
             )
             await ctx.send(embed = embed)
 
-    @commands.command(name='stop', aliases=['quit', 'q', 's', 'end'])
+    @anagram.command(name='stop', aliases=['quit', 'q', 's', 'end'])
     async def stop(self, ctx):
         """
         Stops an ongoing game of anagrams.
@@ -66,7 +75,7 @@ class Anagrams(commands.Cog):
                 await self.publishScores(ctx.channel)
                 self.stopGame(ctx.channel)
     
-    @commands.command(name='skip', aliases=['giveup', 'sk', 'lite'])
+    @anagram.command(name='skip', aliases=['giveup', 'sk', 'lite'])
     async def skip(self, ctx):
         """
         Skips the current question in an anagram game.
@@ -85,7 +94,7 @@ class Anagrams(commands.Cog):
                 answerTask = asyncio.create_task(self.revealAnswer(ctx.channel, waitTime = 0, reason = 'Question skipped'))
                 answerTask.set_name('anagram-' + str(ctx.channel.id))
     
-    @commands.command(name='scores', alias=['points'])
+    @anagram.command(name='scores', alias=['points'])
     async def scores(self, ctx):
         """
         Displays the scoreboard.
@@ -169,9 +178,6 @@ class Anagrams(commands.Cog):
         ctx (discord.ext.commands.Context): The context of the recieved command
         numberOfQuestions (int): The number of questions in the game
         """
-        if self.corpus is None:
-            with open(self.config.corpus) as fp:
-                self.corpus = json.load(fp)
         await self.getWordsFromCorpus(ctx, numberOfQuestions)
         self.channelStates[str(ctx.channel.id)]['scores'] = {}
         askQuestionTask = asyncio.create_task(self.askQuestion(ctx.channel, self.config.timeToFirstQuestion))
@@ -190,13 +196,49 @@ class Anagrams(commands.Cog):
             numberOfQuestions = self.config.noOfQuestions
         elif int(numberOfQuestions) > self.config.questionLimit:
             embed = discord.Embed(
-                title = 'The maximum allowed number is 50. Hence, setting to 50.',
+                title = 'The maximum allowed number is ' + str(self.config.questionLimit) + '. Defaulting to ' + str(self.config.questionLimit) + '.',
                 colour = discord.Colour.blue()
             )
             await ctx.send(embed = embed)
             numberOfQuestions = self.config.questionLimit
-        self.channelStates[str(ctx.channel.id)]['words'] = random.sample( self.corpus.items(), int(numberOfQuestions) )
-    
+        words = random.sample( self.corpus, int(numberOfQuestions) )
+        wordsList = []
+        for i in list(words):
+            response = requests.get(self.config.wordsAPI.replace('{word}', i))
+            if response.status_code != 200 or 'defs' not in response.json()[0]:
+                log(ctx.channel.id, 'Couldn\'t retrieve data for: ' + i)
+                p = i
+                while p in words or response.status_code != 200 or response.json() == [] or 'defs' not in response.json()[0]:
+                    p = random.choice(self.corpus)
+                    response = requests.get(self.config.wordsAPI.replace('{word}', p))
+                words.remove(i)
+                self.corpus.remove(i)
+                log(ctx.channel.id, 'Marking word for deletion: ' + i)
+                words.append(p)
+                details = []
+                data = response.json()[0]['defs']
+                for j in data:
+                    d = {}
+                    partOfSpeech, definition = tuple(j.split('\t', 1))
+                    d['partOfSpeech'] = partOfSpeech
+                    d['definition'] = definition
+                    details.append(d)
+                wordsList.append( (p,details) )
+            else:
+                details = []
+                data = response.json()[0]['defs']
+                for j in data:
+                    d = {}
+                    partOfSpeech, definition = tuple(j.split('\t', 1))
+                    d['partOfSpeech'] = partOfSpeech
+                    d['definition'] = definition
+                    details.append(d)
+                wordsList.append( (i, details) )
+        self.channelStates[str(ctx.channel.id)]['words'] = wordsList
+        with open(self.config.corpus, 'w') as f:
+            for item in self.corpus:
+                f.write("%s\n" % item)
+
     async def askQuestion(self, channel, waitTime = None):
         """
         Ask the next question.
@@ -217,7 +259,7 @@ class Anagrams(commands.Cog):
             word, details = self.channelStates[str(channel.id)]['words'][0]
             self.channelStates[str(channel.id)]['words'] = self.channelStates[str(channel.id)]['words'][1:]
             self.channelStates[str(channel.id)]['answer'] = word
-            self.channelStates[str(channel.id)]['details'] = details['definitions']
+            self.channelStates[str(channel.id)]['details'] = details
             question = self.shuffle_word(word)
             self.channelStates[str(channel.id)]['question'] = discord.Embed(
                 title = '`' + question + '`',

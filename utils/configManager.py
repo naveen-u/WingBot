@@ -76,6 +76,11 @@ class AnagramConfig(Config):
     @property
     def shortWordLengthCutoff(self):
         return int(self.get_property('ShortWordLengthCutoff'))
+    
+    @property
+    def wordsAPI(self):
+        return self.get_property('WordsAPI')
+
 
 class GarlicConfig(Config):
     def __init__(self):
@@ -124,10 +129,6 @@ class PokemonConfig(Config):
     @property
     def timeToSecondHint(self):
         return int(self.get_property('TimeToSecondHint'))
-
-    @property
-    def noOfPokemon(self):
-        return int(self.get_property('NoOfPokemon'))
 
     @property
     def pokemonDataAPI(self):

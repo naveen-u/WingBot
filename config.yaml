@@ -9,7 +9,7 @@ Bot:
         - pokemon
 
 Anagram:
-    Corpus: resources/anagrams/words.json
+    Corpus: resources/anagrams/wordList.txt
     NoOfQuestions: 10
     QuestionLimit: 50
     TimeToFirstQuestion: 3
@@ -19,6 +19,7 @@ Anagram:
     TimeToSecondHint: 5
     TimeToSecondHintShortWords: 13
     ShortWordLengthCutoff: 7
+    WordsAPI: http://api.datamuse.com/words?sp={word}&qe=sp&md=dp&max=1
 
 Garlic:
     Template: resources/garlic/Template.jpeg
