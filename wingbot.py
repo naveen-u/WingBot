@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from utils.configManager import BotConfig
+from utils.help import HelpCommand
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -25,4 +26,6 @@ async def on_ready():
             pass
     return
 
+helpCommand = HelpCommand()
+bot.help_command = helpCommand
 bot.run(TOKEN)
