@@ -348,6 +348,8 @@ class Pokemon(commands.Cog):
         await loop.run_in_executor(None, self.createQuestionImage, data, id)
     
     def createQuestionImage(self, image, id):
+        if not os.path.exists(self.config.pokemonSpriteDirectory):
+            os.makedirs(self.config.pokemonSpriteDirectory)
         fileName = f'{self.config.pokemonSpriteDirectory}/{id}.png'
         if os.path.isfile(fileName):
             return fileName
