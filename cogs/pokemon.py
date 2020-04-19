@@ -595,6 +595,8 @@ class Pokemon(commands.Cog):
         Deletes the question images from the sprite folder.
         """
         mydir = self.config.pokemonSpriteDirectory
+        if not os.path.exists(mydir):
+            return
         filelist = [ f for f in os.listdir(mydir) ]
         for f in filelist:
             os.remove(os.path.join(mydir, f))
