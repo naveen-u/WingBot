@@ -133,10 +133,22 @@ class PokemonConfig(Config):
     @property
     def pokemonDataAPI(self):
         return self.get_property('PokemonDataAPI')
+    
+    @property
+    def pokemonSpeciesDataAPI(self):
+        return self.get_property('PokemonSpeciesDataAPI')
 
     @property
     def pokemonSpriteAPI(self):
         return self.get_property('PokemonSpriteAPI')
+
+    @property
+    def pokemonSpriteDirectory(self):
+        return self.get_property('PokemonSpriteDirectory')
+
+    @property
+    def backgroundImage(self):
+        return self.get_property('BackgroundImage')
 
     @property
     def typeToEmojiMap(self):

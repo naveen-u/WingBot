@@ -7,7 +7,7 @@ import traceback
 import json
 from utils.configManager import AnagramConfig, BotConfig
 from utils.log import log
-import requests
+import aiohttp
 
 class Anagrams(commands.Cog):
     """
@@ -20,7 +20,8 @@ class Anagrams(commands.Cog):
         self.botConfig = BotConfig()
         with open(self.config.corpus) as fp:
             self.corpus = fp.read().splitlines()
-    
+        self.corpusHasChanged = False
+
     @commands.group(name='anagram', aliases = ['an'], invoke_without_command = True, case_insensitive = True)
     async def anagram(self, ctx, numberOfQuestions = None):
         """
@@ -54,7 +55,7 @@ class Anagrams(commands.Cog):
             )
             await ctx.send(embed = embed)
 
-    @anagram.command(name='stop', aliases=['quit', 'q', 's', 'end'])
+    @anagram.command(name='stop', aliases=['s', 'quit', 'q', 'end'])
     async def stop(self, ctx):
         """
         Stops an ongoing game of anagrams.
@@ -68,7 +69,7 @@ class Anagrams(commands.Cog):
             else:
                 embed = discord.Embed(
                     title = ctx.message.author.name + ' cancelled the game!',
-                    description = 'Type `'+ self.botConfig.commandPrefix + 'anagram` to start a new game.',
+                    description = 'Type `'+ self.botConfig.commandPrefix + 'anagram start` to start a new game.',
                     colour = discord.Colour.red()
                 )
                 await ctx.send(embed = embed)
@@ -94,7 +95,7 @@ class Anagrams(commands.Cog):
                 answerTask = asyncio.create_task(self.revealAnswer(ctx.channel, waitTime = 0, reason = 'Question skipped'))
                 answerTask.set_name('anagram-' + str(ctx.channel.id))
     
-    @anagram.command(name='scores', alias=['points'])
+    @anagram.command(name='scores', alias=['sc'])
     async def scores(self, ctx):
         """
         Displays the scoreboard.
@@ -162,7 +163,7 @@ class Anagrams(commands.Cog):
         if str(channel.id) not in self.channelStates:
             embed = discord.Embed(
                 title = 'There are no games in progress',
-                description = 'Type `' + self.botConfig.commandPrefix + 'anagram` to start a game.',
+                description = 'Type `' + self.botConfig.commandPrefix + 'anagram start` to start a game.',
                 colour = discord.Colour.red()
             )
             await channel.send(embed = embed)
@@ -183,8 +184,45 @@ class Anagrams(commands.Cog):
         askQuestionTask = asyncio.create_task(self.askQuestion(ctx.channel, self.config.timeToFirstQuestion))
         askQuestionTask.set_name('anagrams-' + str(ctx.channel.id))
         log(ctx.channel.id, 'Anagram game started.')
+    
+    async def fetch(self, word: str, session: object, ctx):
+        """
+        Fetch data for a word. If required data is not available,
+        get a new word and fetch data for that.
+        """
+        url = self.config.wordsAPI.replace('{word}', word)
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                if data != [] and 'defs' in data[0]:
+                    # The required data is available. Add it to the list.
+                    details = []
+                    for j in data[0]['defs']:
+                        d = {}
+                        partOfSpeech, definition = tuple(j.split('\t', 1))
+                        if partOfSpeech == 'n':
+                            d['partOfSpeech'] = 'noun'
+                        elif partOfSpeech == 'v':
+                            d['partOfSpeech'] = 'verb'
+                        elif partOfSpeech == 'adj':
+                            d['partOfSpeech'] = 'adjective'
+                        d['definition'] = definition
+                        details.append(d)
+                    self.channelStates[str(ctx.channel.id)]['words'].append((word, details))
+                    return
+            # The required data is not available. Get a new word and try again.
+            oldWord = word
+            self.corpus.remove(oldWord)
+            self.corpusHasChanged = True
+            while word in self.channelStates[str(ctx.channel.id)]['wordsList']:
+                word = random.choice(self.corpus)
+            self.channelStates[str(ctx.channel.id)]['wordsList'].append(word)
+            log(ctx.channel.id,f'Replacing {oldWord} with {word}')
+            task = asyncio.create_task(self.fetch(word, session, ctx))
+            await task
+            return
 
-    async def getWordsFromCorpus(self, ctx,numberOfQuestions):
+    async def getWordsFromCorpus(self, ctx, numberOfQuestions):
         """
         Get the words required for the game from the corpus.
 
@@ -201,43 +239,16 @@ class Anagrams(commands.Cog):
             )
             await ctx.send(embed = embed)
             numberOfQuestions = self.config.questionLimit
-        words = random.sample( self.corpus, int(numberOfQuestions) )
-        wordsList = []
-        for i in list(words):
-            response = requests.get(self.config.wordsAPI.replace('{word}', i))
-            if response.status_code != 200 or 'defs' not in response.json()[0]:
-                log(ctx.channel.id, 'Couldn\'t retrieve data for: ' + i)
-                p = i
-                while p in words or response.status_code != 200 or response.json() == [] or 'defs' not in response.json()[0]:
-                    p = random.choice(self.corpus)
-                    response = requests.get(self.config.wordsAPI.replace('{word}', p))
-                words.remove(i)
-                self.corpus.remove(i)
-                log(ctx.channel.id, 'Marking word for deletion: ' + i)
-                words.append(p)
-                details = []
-                data = response.json()[0]['defs']
-                for j in data:
-                    d = {}
-                    partOfSpeech, definition = tuple(j.split('\t', 1))
-                    d['partOfSpeech'] = partOfSpeech
-                    d['definition'] = definition
-                    details.append(d)
-                wordsList.append( (p,details) )
-            else:
-                details = []
-                data = response.json()[0]['defs']
-                for j in data:
-                    d = {}
-                    partOfSpeech, definition = tuple(j.split('\t', 1))
-                    d['partOfSpeech'] = partOfSpeech
-                    d['definition'] = definition
-                    details.append(d)
-                wordsList.append( (i, details) )
-        self.channelStates[str(ctx.channel.id)]['words'] = wordsList
-        with open(self.config.corpus, 'w') as f:
-            for item in self.corpus:
-                f.write("%s\n" % item)
+        self.channelStates[str(ctx.channel.id)]['wordsList'] = random.sample(self.corpus, int(numberOfQuestions))
+        self.channelStates[str(ctx.channel.id)]['words'] = []
+        tasks = []
+        async with aiohttp.ClientSession(loop = self.bot.loop) as session:
+            for word in list(self.channelStates[str(ctx.channel.id)]['wordsList']):
+                task = asyncio.ensure_future(self.fetch(word, session, ctx))
+                tasks.append(task)
+            _ = await asyncio.gather(*tasks)
+        del self.channelStates[str(ctx.channel.id)]['wordsList']
+        print([i[0] for i in self.channelStates[str(ctx.channel.id)]['words']])
 
     async def askQuestion(self, channel, waitTime = None):
         """
@@ -418,7 +429,7 @@ class Anagrams(commands.Cog):
         del self.channelStates[str(channel.id)]
         log(channel.id, 'Anagram game ended.')
 
-    def cleanTasks(self, channel):
+    def cleanTasks(self, channel = ''):
         """
         Clean up any existing game task.
 
@@ -426,7 +437,7 @@ class Anagrams(commands.Cog):
         channel (discord.TextChannel): Channel to clean up tasks in.
         """
         for task in asyncio.all_tasks():
-            if task != asyncio.current_task() and task.get_name() == 'anagram-' + channel:
+            if task != asyncio.current_task() and task.get_name().startswith('anagram-' + channel):
                 task.cancel()
         return
 
@@ -440,6 +451,24 @@ class Anagrams(commands.Cog):
         word = list(word)
         random.shuffle(word)
         return ''.join(word)
+
+    def cleanCorpus(self):
+        """
+        Rewrites the corpus.
+        """
+        with open(self.config.corpus, 'w') as f:
+            for item in self.corpus:
+                f.write("%s\n" % item)
+
+    def signalHandler(self):
+        """
+        Called by bot when it recieves a SIGTERM or SIGINT. For cleanup activities before exiting.
+        """
+        print('Cancelling tasks...')
+        self.cleanTasks()
+        if self.corpusHasChanged:
+            print('Rewriting anagram corpus...')
+            self.cleanCorpus()
 
 
 def setup(bot):

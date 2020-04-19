@@ -7,12 +7,14 @@ import traceback
 import json
 from utils.configManager import PokemonConfig, BotConfig
 from utils.log import log
-import requests
 import re
 from PIL import Image
 from io import BytesIO
 import numpy as np
 import typing
+import aiohttp
+import os.path
+import os
 
 class Pokemon(commands.Cog):
     """
@@ -58,7 +60,7 @@ class Pokemon(commands.Cog):
             )
             await ctx.send(embed = embed)
 
-    @pokemon.command(name='stop', aliases=['quit', 'q', 's', 'end'])
+    @pokemon.command(name='stop', aliases=['s', 'quit', 'q', 'end'])
     async def stop(self, ctx):
         """
         Stops an ongoing game of "Who's that Pokémon?".
@@ -195,6 +197,114 @@ class Pokemon(commands.Cog):
         askQuestionTask = asyncio.create_task(self.askQuestion(ctx.channel, self.config.timeToFirstQuestion))
         askQuestionTask.set_name('pokemon-' + str(ctx.channel.id))
         log(ctx.channel.id, 'Pokemon game started.')
+    
+    async def fetchSprite(self, id:int, session:object, ctx):
+        """
+        Sends a GET request for a pokemon's sprite and starts a task to create a
+        question image.
+
+        Parameters:
+        id (int): The Pokemon's ID
+        session (aiohttp.ClientSession): Session to make the GET request from
+        ctx (discord.ext.commands.Context): The context of the recieved command
+        """
+        url = self.config.pokemonSpriteAPI.replace('{id}', str(id))
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.read()
+                task = asyncio.create_task(self.makeQuestion(BytesIO(data), str(id)))
+                task.set_name(f'pokemon-sprite-{id}-{ctx.channel.id}')
+                return task
+        return False
+    
+    async def fetchData(self, id:int, session: object, ctx):
+        """
+        Sends a GET request for a pokemon's data.
+
+        Parameters:
+        id (int): The Pokemon's ID
+        session (aiohttp.ClientSession): Session to make the GET request from
+        ctx (discord.ext.commands.Context): The context of the recieved command
+        """
+        url = self.config.pokemonDataAPI.replace('{id}', str(id))
+        async with session.get(url) as r:
+            if r.status == 200:
+                data = await r.json()
+                name = data['species']['name'].replace('-', ' ').capitalize()
+                typeList = {}
+                for i in data['types']:
+                    typeList[str(i['slot'])] = i['type']['name']
+                typeList = [typeList[key] for key in sorted(typeList.keys())]
+                d = {}
+                d['id'] = id
+                d['name'] = name
+                d['typeList'] = typeList
+                return d
+        return False
+    
+    async def fetchSpeciesData(self, id: int, session: object, ctx):
+        """
+        Sends a GET request for a pokemon species' data.
+
+        Parameters:
+        id (int): The Pokemon species' ID
+        session (aiohttp.ClientSession): Session to make the GET request from
+        ctx (discord.ext.commands.Context): The context of the recieved command
+        """
+        url = self.config.pokemonSpeciesDataAPI.replace('{id}', str(id))
+        async with session.get(url) as speciesData:
+            if speciesData.status == 200:
+                speciesData = await speciesData.json()
+                descriptionList = []
+                for i in speciesData['flavor_text_entries']:
+                    if i['language']['name'] == 'en':
+                        descriptionList.append(i['flavor_text'].replace('\n', ' '))
+                d = {}
+                d['id'] = id
+                d['descriptionList'] = descriptionList
+                return d
+        return False
+
+    
+    async def fetch(self, id: int, session: object, ctx, start, end):
+        """
+        Fetch all the data for a Pokemon. If the required data is not available,
+        pick a new Pokemon and get data for that.
+
+        Parameters:
+        id (int): The Pokemon species' ID
+        session (aiohttp.ClientSession): Session to make the GET request from
+        ctx (discord.ext.commands.Context): The context of the recieved command
+        start (int): The starting ID in the available list of Pokemon
+        end (int): The starting ID in the available list of Pokemon
+        """
+        tasks = []
+        task = asyncio.ensure_future(self.fetchSprite(id, session, ctx))
+        tasks.append(task)
+        task = asyncio.ensure_future(self.fetchData(id, session, ctx))
+        tasks.append(task)
+        task = asyncio.ensure_future(self.fetchSpeciesData(id, session, ctx))
+        tasks.append(task)
+        results = await asyncio.gather(*tasks)
+        if False in results:
+            # Some data is not available. Get a new pokemon and try again.
+            if results[0] is not False:
+                results[0].cancel()
+            oldId = id
+            while id in self.channelStates[str(ctx.channel.id)]['pokeList']:
+                id = random.randrange(start,end + 1)
+            self.channelStates[str(ctx.channel.id)]['pokeList'].append(id)
+            log(ctx.channel.id,f'Replacing {oldId} with {id}')
+            task = asyncio.create_task(self.fetch(id, session, ctx, start, end))
+            await task
+            return
+        else:
+            result = {}
+            result.update(results[1])
+            result.update(results[2])
+            self.channelStates[str(ctx.channel.id)]['pokemonIdList'].append(result)
+            return
+
 
     async def getPokemonList(self, ctx,numberOfQuestions, region):
         """
@@ -221,24 +331,50 @@ class Pokemon(commands.Cog):
             await ctx.send(embed = embed)
             region = 'all'
         start, end = self.config.getRange(region.lower())
-        pokeList = random.sample(range(start,end + 1), int(numberOfQuestions))
-        log(ctx.channel.id, 'Pokemon List: ' + str(pokeList))
-        for i in list(pokeList):
-            response = requests.head(self.config.pokemonSpriteAPI.replace('{id}', str(i)))
-            if response.status_code != 200:
-                log(ctx.channel.id, 'Got response ' + str(response.status_code) + ' for pokemon ' + str(i))
-                p = i
-                while p in pokeList or response.status_code != 200:
-                    p = random.randrange(start,end + 1)
-                    log(ctx.channel.id, 'Picked ' + str(p) + ' to replace ' + str(i))
-                    response = requests.head(self.config.pokemonSpriteAPI.replace('{id}', str(p)))
-                    log(ctx.channel.id, 'Got response ' + str(response.status_code) + ' for pokemon ' + str(p))
-                pokeList.remove(i)
-                pokeList.append(p)
-
-
-        self.channelStates[str(ctx.channel.id)]['pokemonIdList'] = pokeList
+        self.channelStates[str(ctx.channel.id)]['pokeList'] = random.sample(range(start,end + 1), int(numberOfQuestions))
+        tasks = []
+        self.channelStates[str(ctx.channel.id)]['pokemonIdList'] = []
+        async with aiohttp.ClientSession(loop = self.bot.loop) as session:
+            for id in list(self.channelStates[str(ctx.channel.id)]['pokeList']):
+                task = asyncio.ensure_future(self.fetch(id, session, ctx, start, end))
+                tasks.append(task)
+            _ = await asyncio.gather(*tasks)
+        log(ctx.channel.id, 'Pokemon List: ' + str(self.channelStates[str(ctx.channel.id)]['pokeList']))
+        del self.channelStates[str(ctx.channel.id)]['pokeList']
     
+    async def makeQuestion(self, data, id):
+        # Async wrapper around createQuestionImage
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.createQuestionImage, data, id)
+    
+    def createQuestionImage(self, image, id):
+        fileName = f'{self.config.pokemonSpriteDirectory}/{id}.png'
+        if os.path.isfile(fileName):
+            return fileName
+        sprite = Image.open(image)
+        alpha = sprite.split()[-1]
+        spriteImage = Image.new('RGBA',sprite.size,(54,57,63,0))
+        bgImage = Image.open(self.config.backgroundImage, 'r')
+        spriteImage.putalpha(alpha)
+        
+        spriteImage.load()
+        imageData = np.asarray(spriteImage)
+        imageDataBW = imageData.max(axis=2)
+        nonEmptyColumns = np.where(imageDataBW.max(axis=0)>0)[0]
+        nonEmptyRows = np.where(imageDataBW.max(axis=1)>0)[0]
+        cropBox = (min(nonEmptyRows), max(nonEmptyRows), min(nonEmptyColumns), max(nonEmptyColumns))
+
+        imageDataNew = imageData[cropBox[0]:cropBox[1]+1, cropBox[2]:cropBox[3]+1 , :]
+        newImage = Image.fromarray(imageDataNew)
+
+        mywidth = 750
+        wpercent = (mywidth/float(newImage.size[0]))
+        hsize = int((float(newImage.size[1])*float(wpercent)))
+        newImage = newImage.resize((mywidth,hsize), Image.ANTIALIAS)
+        bgImage.paste(newImage, (225,220), newImage)
+        bgImage.save(fileName)
+        return fileName
+
     async def askQuestion(self, channel, waitTime = None):
         """
         Ask the next question.
@@ -256,71 +392,23 @@ class Pokemon(commands.Cog):
                 return
 
             await asyncio.sleep(waitTime)
-            pokemonId = self.channelStates[str(channel.id)]['pokemonIdList'][0]
+            pokemonData = self.channelStates[str(channel.id)]['pokemonIdList'][0]
             self.channelStates[str(channel.id)]['pokemonIdList'] = self.channelStates[str(channel.id)]['pokemonIdList'][1:]
-            self.channelStates[str(channel.id)]['pokemonId'] = pokemonId
+            self.channelStates[str(channel.id)]['pokemonId'] = pokemonData['id']
+            self.channelStates[str(channel.id)]['answer'] = pokemonData['name']
+            self.channelStates[str(channel.id)]['types'] = pokemonData['typeList']
+            self.channelStates[str(channel.id)]['descriptions'] = pokemonData['descriptionList']
 
-            pokemonData = requests.get(self.config.pokemonDataAPI.replace('{id}', str(pokemonId)))
-            if pokemonData.status_code != 200:
-                log(channel.id, 'PokeAPI |  ID: ' + str(pokemonId) + '\tStatus: ' + str(pokemonData.status_code))
-                askQuestionTask = asyncio.create_task(self.askQuestion(channel, self.config.timeToFirstQuestion))
-                askQuestionTask.set_name('pokemon-' + str(channel.id))
-                return
+            print('Pokemon: ' + pokemonData['name'])
+            id = pokemonData['id']
+            for task in asyncio.all_tasks():
+                if task.get_name() == f'pokemon-sprite-{id}-{channel.id}':
+                    await task
+                    break
 
-            pokemonData = pokemonData.json()
-
-            self.channelStates[str(channel.id)]['answer'] = pokemonData['species']['name'].replace('-', ' ').capitalize()
-            typeList = {}
-            for i in pokemonData['types']:
-                typeList[str(i['slot'])] = i['type']['name']
-            typeList = [typeList[key] for key in sorted(typeList.keys())]
-            self.channelStates[str(channel.id)]['types'] = typeList
-
-            speciesData = requests.get(pokemonData['species']['url'])
-            if speciesData.status_code != 200:
-                log(channel.id, 'PokeAPI |  Species ID: ' + str(pokemonId) + '\tStatus: ' + str(pokemonData.status_code))
-                askQuestionTask = asyncio.create_task(self.askQuestion(channel, self.config.timeToFirstQuestion))
-                askQuestionTask.set_name('pokemon-' + str(channel.id))
-                return
-            speciesData = speciesData.json()
-
-            descriptionList = []
-            
-            for i in speciesData['flavor_text_entries']:
-                if i['language']['name'] == 'en':
-                    descriptionList.append(i['flavor_text'].replace('\n', ' '))
-            self.channelStates[str(channel.id)]['descriptions'] = descriptionList
-
-            spriteResponse = requests.get(self.config.pokemonSpriteAPI.replace('{id}', str(pokemonId)))
-            if spriteResponse.status_code != 200:
-                log(channel.id, 'PokeSpriteAPI | ID: ' + str(pokemonId) + '\tStatus: ' + str(spriteResponse.status_code))
-                askQuestionTask = asyncio.create_task(self.askQuestion(channel, self.config.timeToFirstQuestion))
-                askQuestionTask.set_name('pokemon-' + str(channel.id))
-                return
-
-            sprite = Image.open(BytesIO(spriteResponse.content))
-            alpha = sprite.split()[-1]
-            spriteImage = Image.new('RGBA',sprite.size,(54,57,63,0))
-            bgImage = Image.open('resources/pokemon/background.png', 'r')
-            spriteImage.putalpha(alpha)
-            
-            spriteImage.load()
-            imageData = np.asarray(spriteImage)
-            imageDataBW = imageData.max(axis=2)
-            nonEmptyColumns = np.where(imageDataBW.max(axis=0)>0)[0]
-            nonEmptyRows = np.where(imageDataBW.max(axis=1)>0)[0]
-            cropBox = (min(nonEmptyRows), max(nonEmptyRows), min(nonEmptyColumns), max(nonEmptyColumns))
-
-            imageDataNew = imageData[cropBox[0]:cropBox[1]+1, cropBox[2]:cropBox[3]+1 , :]
-            newImage = Image.fromarray(imageDataNew)
-
-            mywidth = 750
-            wpercent = (mywidth/float(newImage.size[0]))
-            hsize = int((float(newImage.size[1])*float(wpercent)))
-            newImage = newImage.resize((mywidth,hsize), Image.ANTIALIAS)
-            bgImage.paste(newImage, (225,220), newImage)
-            bgImage.save('sprite.png')
-            spriteFile = discord.File('sprite.png', filename = 'sprite.png')
+            fileName = f'{self.config.pokemonSpriteDirectory}/{id}.png'
+            self.channelStates[str(channel.id)]['questionFile'] = fileName
+            spriteFile = discord.File(fileName, filename = 'sprite.png')
 
             self.channelStates[str(channel.id)]['question'] = discord.Embed(
                 title = 'Who\'s that Pokémon?',
@@ -331,8 +419,8 @@ class Pokemon(commands.Cog):
             else:
                 self.channelStates[str(channel.id)]['questionNumber'] += 1
             self.channelStates[str(channel.id)]['question'].set_author(name = 'Question ' + str(self.channelStates[str(channel.id)]['questionNumber']))
-            self.channelStates[str(channel.id)]['question'].set_image(url = 'attachment://sprite.png')
-            await channel.send(file = spriteFile,embed = self.channelStates[str(channel.id)]['question'])
+            self.channelStates[str(channel.id)]['question'].set_image(url = f'attachment://sprite.png')
+            await channel.send(file = spriteFile, embed = self.channelStates[str(channel.id)]['question'])
             try:
                 answerTask = asyncio.create_task(self.revealAnswer(channel))
                 answerTask.set_name('pokemon-' + str(channel.id))
@@ -409,7 +497,7 @@ class Pokemon(commands.Cog):
                 self.channelStates[str(channel.id)]['question'].add_field(name = 'Type', value = self.config.getEmoji(types[0]) + ' ' + types[0].capitalize(), inline = True)
                 if len(types) == 2:
                     self.channelStates[str(channel.id)]['question'].add_field(name = '\u200b', value = self.config.getEmoji(types[1]) + ' ' + types[1].capitalize(), inline = True)
-                spriteFile = discord.File('sprite.png', filename = 'sprite.png')
+                spriteFile = discord.File(self.channelStates[str(channel.id)]['questionFile'], filename = 'sprite.png')
                 await channel.send(file = spriteFile, embed = self.channelStates[str(channel.id)]['question'])
                 hintTask = asyncio.create_task(self.giveHint(channel, self.config.timeToSecondHint))
                 hintTask.set_name('pokemon-' + str(channel.id))
@@ -419,7 +507,7 @@ class Pokemon(commands.Cog):
                     return
                 insensitiveName = re.compile(re.escape(self.channelStates[str(channel.id)]['answer']), re.IGNORECASE)
                 self.channelStates[str(channel.id)]['question'].add_field(name = 'Pokédex', value = insensitiveName.sub(':black_large_square::black_large_square::black_large_square:', self.channelStates[str(channel.id)]['descriptions'][0]), inline = False)
-                spriteFile = discord.File('sprite.png', filename = 'sprite.png')
+                spriteFile = discord.File(self.channelStates[str(channel.id)]['questionFile'], filename = 'sprite.png')
                 await channel.send(file = spriteFile, embed = self.channelStates[str(channel.id)]['question'])
 
             
@@ -488,7 +576,7 @@ class Pokemon(commands.Cog):
         del self.channelStates[str(channel.id)]
         log(channel.id, 'Pokemon game ended.')
 
-    def cleanTasks(self, channel):
+    def cleanTasks(self, channel = ''):
         """
         Clean up any existing game task.
 
@@ -496,9 +584,27 @@ class Pokemon(commands.Cog):
         channel (discord.TextChannel): Channel to clean up tasks in.
         """
         for task in asyncio.all_tasks():
-            if task != asyncio.current_task() and task.get_name() == 'pokemon-' + channel:
+            if task != asyncio.current_task() and task.get_name().startswith('pokemon-' + channel):
                 task.cancel()
         return
+    
+    def cleanSprites(self):
+        """
+        Deletes the question images from the sprite folder.
+        """
+        mydir = self.config.pokemonSpriteDirectory
+        filelist = [ f for f in os.listdir(mydir) ]
+        for f in filelist:
+            os.remove(os.path.join(mydir, f))
+
+    def signalHandler(self):
+        """
+        Called by bot when it recieves a SIGTERM or SIGINT. For cleanup activities before exiting.
+        """
+        print('Cancelling tasks...')
+        self.cleanTasks()
+        print('Deleting sprite data...')
+        self.cleanSprites()
 
 
 def setup(bot):

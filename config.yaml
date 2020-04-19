@@ -35,7 +35,10 @@ Pokemon:
     TimeToFirstHint: 10
     TimeToSecondHint: 10
     PokemonDataAPI: https://pokeapi.co/api/v2/pokemon/{id}
+    PokemonSpeciesDataAPI: https://pokeapi.co/api/v2/pokemon-species/{id}
     PokemonSpriteAPI: https://pokeres.bastionbot.org/images/pokemon/{id}.png
+    PokemonSpriteDirectory: resources/pokemon/sprites
+    BackgroundImage: resources/pokemon/background.png
     TypeToEmojiMap:
         normal: ':white_large_square:'
         fighting: ':boxing_gloves:'
