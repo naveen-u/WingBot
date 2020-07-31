@@ -7,6 +7,9 @@ Bot:
         - anagrams
         - garlic
         - pokemon
+        - reddit
+        - tugofwar
+        - misc
 
 Anagram:
     Corpus: resources/anagrams/wordList.txt
