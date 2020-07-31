@@ -28,6 +28,9 @@ Garlic:
     Template: resources/garlic/Template.jpeg
     DarkTemplate: resources/garlic/DarkTemplate.png
     Font: resources/garlic/CooperHewitt-Heavy.otf
+    
+TugOfWar:
+    TWords: resources/words.txt
 
 Pokemon:
     NoOfQuestions: 10
@@ -42,7 +45,6 @@ Pokemon:
     PokemonSpriteAPI: https://pokeres.bastionbot.org/images/pokemon/{id}.png
     PokemonSpriteDirectory: resources/pokemon/sprites
     BackgroundImage: resources/pokemon/background.png
-    TWords: resources/words.txt
     TypeToEmojiMap:
         normal: ':white_large_square:'
         fighting: ':boxing_gloves:'
