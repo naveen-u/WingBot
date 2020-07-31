@@ -32,6 +32,7 @@ Run `python wingbot.py` from the root directory.
 ## Authors
 
 * **Naveen Unnikrishnan** - *Initial work* - [naveen-u](https://github.com/naveen-u)
+* **Adhitya Mamallan** - *Added Reddit, Tug of War and other useful cogs* - [adhityamamallan](https://github.com/adhityamamallan)
 
 
 ## License
