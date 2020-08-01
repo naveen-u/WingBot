@@ -23,7 +23,9 @@ pip -r requirements.txt
 
 - Create a `.env` file in the root directory with:
 ```
-DISCORD_TOKEN=<your_discord_token>
+DISCORD_TOKEN=<your discord token>
+REDDIT_CLIENT_ID=<your reddit app's client ID>
+REDDIT_SECRET=<your reddit app's client secret>
 ``` 
 
 ## Deployment
