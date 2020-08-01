@@ -10,6 +10,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 - python-3.8
 - A Discord token
+- A Reddit bot application's credentials
 
 
 ### Installing
