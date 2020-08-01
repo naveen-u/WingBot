@@ -9,8 +9,8 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 - python-3.8
-- A Discord token
-- A Reddit application's credentials
+- [A Discord token](https://discordpy.readthedocs.io/en/latest/discord.html)
+- [A Reddit application's credentials](https://ssl.reddit.com/prefs/apps/)
 
 
 ### Installing
