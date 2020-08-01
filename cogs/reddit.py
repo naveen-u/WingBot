@@ -6,7 +6,7 @@ from utils.configManager import RedditConfig, BotConfig
 
 
 # Can be literally anything. Or you can remove these lines altogether.
-send_msgs = ['Beaming Bubot up...', 
+send_msgs = ['Beaming WingBot up...', 
             'Calling up ur mom...', 
             'Staring into the distance...', 
             'Shining a torch at couples...', 
@@ -27,16 +27,19 @@ exit_msgs = ["Using 「Za Hando」 to erase this message (ain't that wacky?)",
             "Proving that Informalz should be a club..."]
 
 class Reddit(commands.Cog):
-    """Pulls posts from Reddit."""
+    """Pull posts from Reddit."""
     def __init__(self, bot):
         self.bot = bot
         
         self.bot_config = BotConfig()
+        self.reddit_config = RedditConfig()
 
         self.reddit_instance = praw.Reddit(
-            client_id = getenv('REDDIT_CLIENT_ID'),
-            client_secret = getenv('REDDIT_SECRET'),
-            user_agent = 'discord:bubot:1.0.0 (by /u/alexaplaymiamidisco)'
+            # client_id = getenv('REDDIT_CLIENT_ID'),
+            # client_secret = getenv('REDDIT_SECRET'),
+            client_id = 'QnQqa-D7GleNhg',
+            client_secret = '9Fhg720HMVG48tK6uudQCy6QUao',
+            user_agent = self.reddit_config.user_agent
         )
 
     def getsubpost(self, sublist):

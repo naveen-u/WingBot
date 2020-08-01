@@ -98,6 +98,14 @@ class GarlicConfig(Config):
     def font(self):
         return self.get_property('Font')
 
+class RedditConfig(Config):
+    def __init__(self):
+        Config.__init__(self,'Reddit')
+    
+    @property   
+    def user_agent(self):
+        return self.get_property('UserAgent')
+
 class PokemonConfig(Config):
     def __init__(self):
         Config.__init__(self,'Pokemon')

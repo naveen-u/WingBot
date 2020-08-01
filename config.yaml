@@ -28,8 +28,8 @@ Garlic:
     DarkTemplate: resources/garlic/DarkTemplate.png
     Font: resources/garlic/CooperHewitt-Heavy.otf
     
-TugOfWar:
-    TWords: resources/words.txt
+Reddit:
+    UserAgent: discord:bubot:1.0.0 (by /u/alexaplaymiamidisco)
 
 Pokemon:
     NoOfQuestions: 10
