@@ -1,6 +1,7 @@
 import discord
 import praw
 import random
+import os
 from discord.ext import commands
 from utils.configManager import RedditConfig, BotConfig
 
@@ -35,8 +36,8 @@ class Reddit(commands.Cog):
         self.reddit_config = RedditConfig()
 
         self.reddit_instance = praw.Reddit(
-            client_id = getenv('REDDIT_CLIENT_ID'),
-            client_secret = getenv('REDDIT_SECRET'),
+            client_id = os.getenv('REDDIT_CLIENT_ID'),
+            client_secret = os.getenv('REDDIT_SECRET'),
             user_agent = self.reddit_config.user_agent
         )
 
