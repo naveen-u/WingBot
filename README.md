@@ -9,8 +9,8 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 - python-3.8
-- A Discord token
-- A Reddit bot application's credentials
+- [A Discord token](https://discordpy.readthedocs.io/en/latest/discord.html)
+- [A Reddit application's credentials](https://ssl.reddit.com/prefs/apps/)
 
 
 ### Installing
@@ -23,7 +23,9 @@ pip -r requirements.txt
 
 - Create a `.env` file in the root directory with:
 ```
-DISCORD_TOKEN=<your_discord_token>
+DISCORD_TOKEN=<your discord token>
+REDDIT_CLIENT_ID=<your reddit app's client ID>
+REDDIT_SECRET=<your reddit app's client secret>
 ``` 
 
 ## Deployment
