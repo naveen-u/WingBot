@@ -35,10 +35,8 @@ class Reddit(commands.Cog):
         self.reddit_config = RedditConfig()
 
         self.reddit_instance = praw.Reddit(
-            # client_id = getenv('REDDIT_CLIENT_ID'),
-            # client_secret = getenv('REDDIT_SECRET'),
-            client_id = 'QnQqa-D7GleNhg',
-            client_secret = '9Fhg720HMVG48tK6uudQCy6QUao',
+            client_id = getenv('REDDIT_CLIENT_ID'),
+            client_secret = getenv('REDDIT_SECRET'),
             user_agent = self.reddit_config.user_agent
         )
 

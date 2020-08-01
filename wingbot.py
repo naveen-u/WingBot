@@ -9,8 +9,7 @@ import sys
 import asyncio
 
 load_dotenv()
-# TOKEN = os.getenv('DISCORD_TOKEN')
-TOKEN = 'NjkzMzkyMzczNzk5MDU5NDU3.Xn8Z-A.HGEqVTUVD2OLyzIN7KSTLRz-rdc'
+TOKEN = os.getenv('DISCORD_TOKEN')
 config = BotConfig()
 bot = commands.Bot(command_prefix = config.commandPrefix, case_insensitive = True)
 
