@@ -4,28 +4,6 @@ import random
 from discord.ext import commands
 from utils.configManager import RedditConfig, BotConfig
 
-
-# Can be literally anything. Or you can remove these lines altogether.
-send_msgs = ['Beaming WingBot up...', 
-            'Calling up ur mom...', 
-            'Staring into the distance...', 
-            'Shining a torch at couples...', 
-            'Opening toilet door...',
-            'Contacting Halo matchmaking service...']
-wait_msgs = ['Convincing Mustansir to go bald...', 
-            'Rolling...', 
-            'Going through old compre papers...', 
-            "Rifling through Hari Nair's dank meme stash...", 
-            'Looking from Pahadi...',
-            'Waiting in line at Akshay...']
-exit_msgs = ["Using 「Za Hando」 to erase this message (ain't that wacky?)",
-            "Climbing down from the mess roof...", 
-            "Locking the room door...",
-            'Withdrawing Speedwagon coolly...',
-            "Tallying up quiz scores...",
-            "Selling kindofahappystory merch at the DoPy booth...",
-            "Proving that Informalz should be a club..."]
-
 class Reddit(commands.Cog):
     """Pull posts from Reddit."""
     def __init__(self, bot):
@@ -65,23 +43,28 @@ class Reddit(commands.Cog):
         return embed
 
     async def post(self, ctx, subname, true_if_top):
-        message = await ctx.send(random.choice(send_msgs))
         try:
             subreddit = self.reddit_instance.subreddit(subname)
         except:
-            await message.edit(content = "That didn't load. Check the subreddit name and try again.")
+            await ctx.send("That didn't load. Check the subreddit name and try again.")
             return 
-        if(subreddit.over18 and not ctx.channel.is_nsfw()):
-            await message.edit(content = "Go run this in an NSFW channel you degenerate")
+
+        try:
+            if(subreddit.over18 and not ctx.channel.is_nsfw()):
+                await ctx.send("Go run this in an NSFW channel you degenerate")
+                return
+        except:
+            await ctx.send("That didn't work. It's possible the subreddit you're trying to view is banned.")
             return
-        await message.edit(content = random.choice(wait_msgs))
+
+        post = None
+
         if(true_if_top):
             post = self.getsubpost(subreddit.top('day', limit=40))
         else:
             post = self.getsubpost(subreddit.hot(limit=40))
-        await message.edit(content = random.choice(exit_msgs))
+
         print(post.url)
-        await message.delete()
         await ctx.send(embed = self.credits(post))
         if post.is_self:
             await ctx.send(post.selftext)
@@ -113,12 +96,8 @@ class Reddit(commands.Cog):
     @commands.command()
     async def copypasta(self, ctx):
         """To be fair, you have to have a very high IQ to use this command."""
-        message = await ctx.send(random.choice(send_msgs))
         subreddit = self.reddit_instance.subreddit('copypasta')
-        await message.edit(content = random.choice(wait_msgs))
         post = self.getsubpost_sfw(subreddit.hot(limit=40))
-        await message.edit(content = random.choice(exit_msgs))
-        await message.delete()
         await ctx.send('**{0}**'.format(post.title))
         await ctx.send(post.selftext)
 
