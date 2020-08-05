@@ -7,6 +7,8 @@ Bot:
         - anagrams
         - garlic
         - pokemon
+        - reddit
+        - misc
 
 Anagram:
     Corpus: resources/anagrams/wordList.txt
@@ -25,6 +27,9 @@ Garlic:
     Template: resources/garlic/Template.jpeg
     DarkTemplate: resources/garlic/DarkTemplate.png
     Font: resources/garlic/CooperHewitt-Heavy.otf
+    
+Reddit:
+    UserAgent: discord:bubot:1.0.0 (by /u/alexaplaymiamidisco)
 
 Pokemon:
     NoOfQuestions: 10
