@@ -1,6 +1,6 @@
 # Wing Bot
 
-A Discord bot to play anagrams, "who's that Pokemon?", and more!
+A Discord bot to play games, browse reddit, and more!
 
 ## Getting Started
 
@@ -26,16 +26,16 @@ pip -r requirements.txt
 DISCORD_TOKEN=<your discord token>
 REDDIT_CLIENT_ID=<your reddit app's client ID>
 REDDIT_SECRET=<your reddit app's client secret>
-``` 
+```
 
 ## Deployment
 
-Run `python wingbot.py` from the root directory. 
+Run `python wingbot.py` from the root directory.
 
 ## Authors
 
 * **Naveen Unnikrishnan** - *Initial work* - [naveen-u](https://github.com/naveen-u)
-* **Adhitya Mamallan** - *Added Reddit and other useful cogs* - [adhityamamallan](https://github.com/adhityamamallan)
+* **Adhitya Mamallan** - *Reddit and polls* - [adhityamamallan](https://github.com/adhityamamallan)
 
 
 ## License
