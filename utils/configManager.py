@@ -108,6 +108,14 @@ class RedditConfig(Config):
     def user_agent(self):
         return self.get_property("UserAgent")
 
+    @property
+    def meme_subs(self):
+        return self.get_property("MemeSubs")
+
+    @property
+    def cute_subs(self):
+        return self.get_property("CuteSubs")
+
 
 class PokemonConfig(Config):
     def __init__(self):

@@ -30,6 +30,19 @@ Garlic:
     
 Reddit:
     UserAgent: discord:bubot:1.0.0 (by /u/alexaplaymiamidisco)
+    MemeSubs:
+        - dankmemes
+        - rareinsults
+        - tumblr
+        - greentext
+        - fakehistoryporn
+        - antimeme
+    CuteSubs:
+        - aww
+        - woof_irl
+        - meow_irl
+        - eyebleach
+        - rarepuppers
 
 Pokemon:
     NoOfQuestions: 10

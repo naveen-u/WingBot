@@ -18,10 +18,10 @@ These instructions will get you a copy of the project up and running on your loc
 - Install the required packages using:
 
 ```
-pip -r requirements.txt
+pip install -r requirements.txt
 ```
 
-- Create a `.env` file in the root directory with:
+- Create a file named `.env` in the root directory with:
 ```
 DISCORD_TOKEN=<your discord token>
 REDDIT_CLIENT_ID=<your reddit app's client ID>
