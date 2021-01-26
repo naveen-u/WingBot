@@ -3,6 +3,8 @@ import random
 
 import discord
 import praw
+import urlextract
+import urllib
 from discord.ext import commands
 from utils.configManager import BotConfig, RedditConfig
 
@@ -21,6 +23,35 @@ class Reddit(commands.Cog):
             client_secret=os.getenv("REDDIT_SECRET"),
             user_agent=self.reddit_config.user_agent,
         )
+
+    async def check_and_post_reddit(self, message):
+        channel = message.channel
+        url = message.content
+
+        extractor = urlextract.URLExtract()
+        if not extractor.has_urls(url):
+            return
+
+        parse_result = urllib.parse.urlparse(url)
+        if parse_result[1] != "www.reddit.com":
+            return
+
+        try:
+            post = self.reddit_instance.submission(url=url)
+        except:
+            print("INFO: This Reddit URL seems to be invalid. The link might not be prefixed with https://")
+            return
+
+        if post.is_self:
+            await channel.send(post.selftext)
+        else:
+            await channel.send(post.url)
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author == self.bot.user:
+            return
+        await self.check_and_post_reddit(message)
 
     def getsubpost(self, sublist):
         posts = []
@@ -107,7 +138,6 @@ class Reddit(commands.Cog):
         post = self.getsubpost_sfw(subreddit.hot(limit=40))
         await ctx.send("**{0}**".format(post.title))
         await ctx.send(post.selftext)
-
 
 def setup(bot):
     """
