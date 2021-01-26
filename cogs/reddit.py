@@ -91,29 +91,13 @@ class Reddit(commands.Cog):
     @commands.command(aliases=["randomcute", "cute", "aw", "awww"])
     async def aww(self, ctx):
         """Gets a random cute post."""
-        awwlist = [
-            "cute",
-            "rarepuppers",
-            "woof_irl",
-            "meow_irl",
-            "catswithjobs",
-            "eyebleach",
-        ]
+        awwlist = self.reddit_config.cute_subs
         await self.top(ctx, random.choice(awwlist))
 
     @commands.command(aliases=["funny"])
     async def meme(self, ctx):
         """Gets a random meme."""
-        memelist = [
-            "dankmemes",
-            "okbuddyretard",
-            "wholesomememes",
-            "rareinsults",
-            "fakehistoryporn",
-            "tumblr",
-            "antimeme",
-            "greentext",
-        ]
+        memelist = self.reddit_config.meme_subs
         await self.top(ctx, random.choice(memelist))
 
     @commands.command()
