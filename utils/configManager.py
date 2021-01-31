@@ -182,3 +182,12 @@ class PokemonConfig(Config):
 
     def getRange(self, region: str):
         return self.regionWiseDex[region]["start"], self.regionWiseDex[region]["end"]
+
+
+class BullshitConfig(Config):
+    def __init__(self):
+        Config.__init__(self, "Bullshit")
+
+    @property
+    def font(self):
+        return self.get_property("Font")

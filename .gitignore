@@ -2,6 +2,7 @@
 score.png
 sprite.png
 diygarlic.png
+bullshit.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -130,6 +131,9 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# IDE settings
+.vscode
 
 # Pyre type checker
 .pyre/
