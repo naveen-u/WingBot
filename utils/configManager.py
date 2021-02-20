@@ -33,6 +33,10 @@ class BotConfig(Config):
     def cogs(self):
         return self.get_property("Cogs")
 
+    @property
+    def database(self):
+        return self.get_property("Database")
+
 
 class AnagramConfig(Config):
     def __init__(self):
@@ -191,3 +195,24 @@ class BullshitConfig(Config):
     @property
     def font(self):
         return self.get_property("Font")
+
+
+class XkcdConfig(Config):
+    def __init__(self):
+        Config.__init__(self, "Xkcd")
+
+    @property
+    def rss_feed(self):
+        return self.get_property("RssFeed")
+
+    @property
+    def current_comic(self):
+        return self.get_property("CurrentComic")
+
+    @property
+    def nth_comic(self):
+        return self.get_property("NthComic")
+
+    @property
+    def rss_collection(self):
+        return self.get_property("RssCollection")

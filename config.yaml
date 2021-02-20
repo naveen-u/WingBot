@@ -10,6 +10,8 @@ Bot:
     - reddit
     - misc
     - bullshit
+    - xkcd
+  Database: dbWingBot
 
 Anagram:
   Corpus: resources/anagrams/wordList.txt
@@ -105,3 +107,9 @@ Pokemon:
 
 Bullshit:
   Font: resources/garlic/CooperHewitt-Heavy.otf
+
+Xkcd:
+  RssFeed: https://xkcd.com/rss.xml
+  CurrentComic: https://xkcd.com/info.0.json
+  NthComic: https://xkcd.com/${n}/info.0.json
+  RssCollection: xkcd_rss

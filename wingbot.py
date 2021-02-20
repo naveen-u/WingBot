@@ -3,6 +3,7 @@ import os
 import signal
 
 import discord
+import pymongo
 from discord.ext import commands
 from dotenv import load_dotenv
 from utils.configManager import BotConfig
@@ -10,8 +11,14 @@ from utils.help import HelpCommand
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
+MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING")
 config = BotConfig()
 bot = commands.Bot(command_prefix=config.commandPrefix, case_insensitive=True)
+
+db_client = pymongo.MongoClient(MONGODB_CONNECTION_STRING)
+
+bot.config = config
+bot.db_client = db_client
 
 
 async def signal_handler():
@@ -24,6 +31,7 @@ async def signal_handler():
         print(f"Executing signal handlers of the {item} cog...")
         if hasattr(cog, "signal_handler"):
             cog.signal_handler()
+    db_client.close()
     await bot.close()
 
 

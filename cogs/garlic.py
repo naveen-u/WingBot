@@ -3,7 +3,7 @@ import textwrap
 import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
-from utils.configManager import BotConfig, GarlicConfig
+from utils.configManager import GarlicConfig
 from utils.log import log
 
 
@@ -15,7 +15,7 @@ class Garlic(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = GarlicConfig()
-        self.botConfig = BotConfig()
+        self.botConfig = bot.config
 
     @commands.command(
         usage="[dark | light] <text to include in post>", aliases=["garlic"]
