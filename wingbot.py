@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import os
 import signal
 
@@ -30,7 +31,10 @@ async def signal_handler():
         cog = bot.get_cog(item.capitalize())
         print(f"Executing signal handlers of the {item} cog...")
         if hasattr(cog, "signal_handler"):
-            cog.signal_handler()
+            if inspect.iscoroutinefunction(cog.signal_handler):
+                await cog.signal_handler()
+            else:
+                cog.signal_handler()
     db_client.close()
     await bot.close()
 
