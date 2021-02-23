@@ -57,12 +57,13 @@ class Xkcd(commands.Cog):
         if response.status_code != 200:
             raise requests.exceptions.RequestException()
         comic = response.json()
+        timestamp = datetime(
+            year=int(comic["year"]), month=int(comic["month"]), day=int(comic["day"])
+        )
         embed = discord.Embed(
             title=f"#{comic['num']}: {comic['title']}",
             colour=discord.Colour.blue(),
-            timestamp=datetime(
-                int(comic["year"]), int(comic["month"]), int(comic["day"])
-            ),
+            description=f":calendar_spiral: {timestamp.strftime('%d %B, %Y')}",
         )
         embed.set_image(url=comic["img"])
         embed.set_footer(text=comic["alt"])
@@ -138,6 +139,11 @@ class Xkcd(commands.Cog):
                 embed = await self.make_embed_for_comic(comicId=comic_id)
                 for subscriber in self.subscribers:
                     channel = self.bot.get_channel(subscriber)
+                    if channel is None:
+                        try:
+                            channel = await self.bot.fetch_channel(subscriber)
+                        except Exception as e:
+                            print(e)
                     await channel.send(embed=embed)
             self.latest = latest_comic_id
 
