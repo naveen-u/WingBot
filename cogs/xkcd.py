@@ -9,6 +9,8 @@ from discord.ext import commands
 from textwrap import wrap
 from utils.configManager import XkcdConfig
 
+ERROR_MESSAGE = "Ruh-roh! Something's wrong."
+
 
 class Xkcd(commands.Cog):
     """
@@ -47,8 +49,18 @@ class Xkcd(commands.Cog):
         """
         Fetches an xkcd comic.
         """
+        try:
+            comicId = int(comicId)
+        except:
+            comicId = None
         async with ctx.typing():
-            embed = await self.make_embed_for_comic(comicId)
+            try:
+                embed = await self.make_embed_for_comic(comicId)
+            except requests.exceptions.RequestException:
+                await ctx.send(
+                    f"{ERROR_MESSAGE} Are you sure that comic number is valid?"
+                )
+                return
         await ctx.reply(embed=embed)
 
     async def make_embed_for_comic(self, comicId=None):
@@ -100,7 +112,7 @@ class Xkcd(commands.Cog):
                 await ctx.reply("Alright, I'll start sharing new xkcd comics here!")
                 self.subscribers.append(ctx.channel.id)
         except:
-            await ctx.reply("Ruh-roh! Something's wrong.")
+            await ctx.reply(ERROR_MESSAGE)
 
     @xkcd.command(name="unsubscribe", aliases=["unsub", "u"])
     async def unsubscribe(self, ctx):
@@ -119,7 +131,7 @@ class Xkcd(commands.Cog):
                 await ctx.reply("Alright, I'll stop sharing new xkcd comics here!")
                 self.subscribers.remove(ctx.channel.id)
         except:
-            await ctx.reply("Ruh-roh! Something's wrong.")
+            await ctx.reply(ERROR_MESSAGE)
 
     @xkcd.command(name="explain")
     async def explain(self, ctx, comicId):
