@@ -6,6 +6,7 @@ import feedparser
 import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord.ext import commands
+from textwrap import wrap
 from utils.configManager import XkcdConfig
 
 
@@ -46,10 +47,23 @@ class Xkcd(commands.Cog):
         """
         Fetches an xkcd comic.
         """
-        embed = await self.make_embed_for_comic(comicId)
-        await ctx.send(embed=embed)
+        async with ctx.typing():
+            embed = await self.make_embed_for_comic(comicId)
+        await ctx.reply(embed=embed)
 
     async def make_embed_for_comic(self, comicId=None):
+        """
+        Create an embed for the comic with the given ID.
+
+        Args:
+            comicId (int, optional): ID of the comic to be fetched. Defaults to the most recent.
+
+        Raises:
+            requests.exceptions.RequestException: If something goes wrong with the API call
+
+        Returns:
+            discord.Embed: The embed with the comic and description
+        """
         if comicId is None:
             response = requests.get(self.config.current_comic)
         else:
@@ -79,33 +93,104 @@ class Xkcd(commands.Cog):
                 {}, {"$addToSet": {"subscribers": ctx.channel.id}}
             )
             if result.modified_count == 0:
-                await ctx.send(
+                await ctx.reply(
                     "I'm pretty sure you were already subscribed. No worries, I'll keep sending new xkcd comics here!"
                 )
             else:
-                await ctx.send("Alright, I'll start sharing new xkcd comics here!")
+                await ctx.reply("Alright, I'll start sharing new xkcd comics here!")
                 self.subscribers.append(ctx.channel.id)
         except:
-            await ctx.send("Ruh-roh! Something's wrong.")
+            await ctx.reply("Ruh-roh! Something's wrong.")
 
     @xkcd.command(name="unsubscribe", aliases=["unsub", "u"])
     async def unsubscribe(self, ctx):
         """
-        Unsubscribe the current channel to xkcd updates.
+        Unsubscribe the current channel from xkcd updates.
         """
         try:
             result = self.rss_collection.update_one(
                 {}, {"$pull": {"subscribers": ctx.channel.id}}
             )
             if result.modified_count == 0:
-                await ctx.send(
+                await ctx.reply(
                     "I don't think you were subscribed in the first place. No worries, I won't be sending new xkcd comics here!"
                 )
             else:
-                await ctx.send("Alright, I'll stop sharing new xkcd comics here!")
+                await ctx.reply("Alright, I'll stop sharing new xkcd comics here!")
                 self.subscribers.remove(ctx.channel.id)
         except:
-            await ctx.send("Ruh-roh! Something's wrong.")
+            await ctx.reply("Ruh-roh! Something's wrong.")
+
+    @xkcd.command(name="explain")
+    async def explain(self, ctx, comicId):
+        """
+        Fetches the explanation of a comic from explainxkcd.
+        """
+        async with ctx.typing():
+            response = requests.get(
+                self.config.explain_url_redirect.replace("${n}", str(comicId))
+            )
+            if response.status_code != 200:
+                await ctx.reply("Ruh-roh! I couldn't find an explanation for that.")
+            response_text = response.json()["parse"]["text"]["*"]
+            title = re.search(r'href="/wiki/index.php/([^"]+)"', response_text).group(1)
+            response = requests.get(
+                self.config.explain_url.replace("${title}", str(title))
+            )
+            if response.status_code != 200:
+                await ctx.reply("Ruh-roh! I couldn't find an explanation for that.")
+            explanation = self.parse_explanation(
+                response.json()["parse"]["wikitext"]["*"]
+            )
+            lines = explanation.split("\n")
+            url = self.config.explain_page_url.replace("${title}", str(title))
+            parts = []
+            for line in lines:
+                parts.extend(wrap(line, 2000))
+            await ctx.reply(url)
+            for part in parts:
+                await ctx.send(part)
+
+    def parse_explanation(self, text):
+        """
+        Parse wikitext into plain text/discord markdown.
+
+        Args:
+            text (str): Wikitext from the explainxkcd wiki
+
+        Returns:
+            str: parsed wikitext
+        """
+        substitution_patterns = [
+            # wikipedia links
+            (r"\{\{w\|([^|}]+)\}\}", r"\1"),
+            # wikipedia links with custom text
+            (r"\{\{w\|([^|}]+)\|([^}]+)\}\}", r"\2"),
+            # wiki links with custom text
+            (r"\[\[([^\|\]]+)\|([^\]]+)\]\]", r"\2"),
+            # wiki links
+            (r"\[\[([^\]]+)\]\]", r"\1"),
+            # formatting commands
+            (r"\{\{[^\}]+\}\}", ""),
+            # links
+            (r"\[[^\s]+\s([^\]]+)\]", r"\1"),
+            # bullets
+            (r"\*(\S)", r"• \1"),
+            # bold + italic
+            (r"'''''([^']+)'''''", r"***\1***"),
+            # bold
+            (r"'''([^']+)'''", r"**\1**"),
+            # italics
+            (r"''([^']+)''", r"*\1*"),
+            # remove comments
+            (r"<!--(.*?)-->", r""),
+            # heading
+            (r"==[^=]+==", ""),
+        ]
+        for substitution_pattern in substitution_patterns:
+            find, replace = substitution_pattern
+            text = re.sub(find, replace, text, flags=re.MULTILINE)
+        return text
 
     async def check_for_new_comics(self):
         """

@@ -216,3 +216,15 @@ class XkcdConfig(Config):
     @property
     def rss_collection(self):
         return self.get_property("RssCollection")
+
+    @property
+    def explain_url_redirect(self):
+        return self.get_property("ExplainUrlForRedirect")
+
+    @property
+    def explain_url(self):
+        return self.get_property("ExplainUrl")
+
+    @property
+    def explain_page_url(self):
+        return self.get_property("ExplainPageUrl")

@@ -113,3 +113,6 @@ Xkcd:
   CurrentComic: https://xkcd.com/info.0.json
   NthComic: https://xkcd.com/${n}/info.0.json
   RssCollection: xkcd_rss
+  ExplainUrlForRedirect: https://www.explainxkcd.com/wiki/api.php?action=parse&page=${n}&format=json
+  ExplainUrl: https://www.explainxkcd.com/wiki/api.php?action=parse&page=${title}&prop=wikitext&section=1&format=json
+  ExplainPageUrl: https://www.explainxkcd.com/wiki/index.php/${title}
