@@ -33,6 +33,10 @@ class BotConfig(Config):
     def cogs(self):
         return self.get_property("Cogs")
 
+    @property
+    def database(self):
+        return self.get_property("Database")
+
 
 class AnagramConfig(Config):
     def __init__(self):
@@ -182,3 +186,45 @@ class PokemonConfig(Config):
 
     def getRange(self, region: str):
         return self.regionWiseDex[region]["start"], self.regionWiseDex[region]["end"]
+
+
+class BullshitConfig(Config):
+    def __init__(self):
+        Config.__init__(self, "Bullshit")
+
+    @property
+    def font(self):
+        return self.get_property("Font")
+
+
+class XkcdConfig(Config):
+    def __init__(self):
+        Config.__init__(self, "Xkcd")
+
+    @property
+    def rss_feed(self):
+        return self.get_property("RssFeed")
+
+    @property
+    def current_comic(self):
+        return self.get_property("CurrentComic")
+
+    @property
+    def nth_comic(self):
+        return self.get_property("NthComic")
+
+    @property
+    def rss_collection(self):
+        return self.get_property("RssCollection")
+
+    @property
+    def explain_url_redirect(self):
+        return self.get_property("ExplainUrlForRedirect")
+
+    @property
+    def explain_url(self):
+        return self.get_property("ExplainUrl")
+
+    @property
+    def explain_page_url(self):
+        return self.get_property("ExplainPageUrl")

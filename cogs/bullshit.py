@@ -1,53 +1,42 @@
+import random
 import textwrap
 
 import discord
+import nabg
+import requests
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
-from utils.configManager import GarlicConfig
+from utils.configManager import BullshitConfig
 from utils.log import log
 
 
-class Garlic(commands.Cog):
+class Bullshit(commands.Cog):
     """
-    Create posts for The Garlic.
+    Create WhatsApp family group forwards based on Seb Pearce's New-Age Bullshit Generator.
     """
 
     def __init__(self, bot):
+        self.config = BullshitConfig()
         self.bot = bot
-        self.config = GarlicConfig()
-        self.botConfig = bot.config
 
-    @commands.command(
-        usage="[dark | light] <text to include in post>", aliases=["garlic"]
-    )
-    async def diygarlic(self, ctx, *, args: str):
+    @commands.command(aliases=["shit"])
+    async def bullshit(self, ctx):
         """
-        Creates a garlic post with the given text. Dark mode or light mode can be specified. Defaults to light mode.
+        Creates a new-age bullshit image.
         """
-        args = args.upper()
-        words = args.split()
-        if words[0] == "DARK":
-            if not words[1:]:
-                await ctx.send("You forgot to give me input dumdum!")
-                return
-            await self.makePost(ctx, self.config.darkTemplate, words[1:], "white")
-        elif words[0] == "LIGHT":
-            if not words[1:]:
-                await ctx.send("You forgot to give me input dumdum!")
-                return
-            await self.makePost(ctx, self.config.template, words[1:], "black")
-        else:
-            await self.makePost(ctx, self.config.template, words, "black")
+        await self.makePost(ctx)
 
-    async def makePost(self, ctx, imageFile, words, colour):
+    async def makePost(self, ctx):
         """
-        Creates and sends the garlic post.
+        Creates and sends the message.
         """
-        image = Image.open(imageFile)
+        image = Image.open(
+            requests.get("http://placeimg.com/640/480/nature", stream=True).raw
+        )
         draw = ImageDraw.Draw(image)
 
         fontsize = 1
-        txt = " ".join(words)
+        txt = nabg.ionize()
         # portion of image width you want text width to be
         img_fraction = 0.8
 
@@ -78,29 +67,35 @@ class Garlic(commands.Cog):
 
         w, h = draw.multiline_textsize(txt, font, spacing=1)
         left = (image.width - w) * 0.5
-        top = (image.height - h) * 0.4
+        top = (image.height - h) * 0.2
 
         await message.edit(content="Rasterizing image...")
         draw.text(
-            (left, top), txt, colour, font=font, spacing=50
+            (left, top),
+            txt,
+            random.choice(["yellow", "orange", "red", "skyblue", "green"]),
+            font=font,
+            spacing=50,
+            stroke_width=5,
+            stroke_fill="black",
         )  # put the text on the image
-        image.save("diygarlic.png")
+        image.save("bullshit.png")
         await message.delete()
-        await ctx.send(file=discord.File("diygarlic.png"))
+        await ctx.send(file=discord.File("bullshit.png"))
 
-    @diygarlic.error
-    async def diygarlicError(self, ctx, error):
+    @bullshit.error
+    async def bullshitError(self, ctx, error):
         """
-        Error handler for the diygarlic command
+        Error handler for the bullshit command
         """
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            await ctx.send("You forgot to give me input dumdum!")
-        else:
-            log(ctx.channel.id, "Oopsie, exception: ", error)
+        # if isinstance(error, commands.errors.MissingRequiredArgument):
+        #     await ctx.send("You forgot to give me input dumdum!")
+        # else:
+        log(ctx.channel.id, "Oopsie, exception: ", error)
 
 
 def setup(bot):
     """
     Called automatically by discord while loading extension. Adds the Anagram cog on to the bot.
     """
-    bot.add_cog(Garlic(bot))
+    bot.add_cog(Bullshit(bot))

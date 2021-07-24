@@ -1,8 +1,9 @@
+import asyncio
 import os
 import random
 
 import discord
-import praw
+import asyncpraw
 import urlextract
 import urllib
 from discord.ext import commands
@@ -18,7 +19,7 @@ class Reddit(commands.Cog):
         self.bot_config = BotConfig()
         self.reddit_config = RedditConfig()
 
-        self.reddit_instance = praw.Reddit(
+        self.reddit_instance = asyncpraw.Reddit(
             client_id=os.getenv("REDDIT_CLIENT_ID"),
             client_secret=os.getenv("REDDIT_SECRET"),
             user_agent=self.reddit_config.user_agent,
@@ -37,9 +38,11 @@ class Reddit(commands.Cog):
             return
 
         try:
-            post = self.reddit_instance.submission(url=url)
+            post = await self.reddit_instance.submission(url=url)
         except:
-            print("INFO: This Reddit URL seems to be invalid. The link might not be prefixed with https://")
+            print(
+                "INFO: This Reddit URL seems to be invalid. The link might not be prefixed with https://"
+            )
             return
 
         if post.is_self:
@@ -53,17 +56,17 @@ class Reddit(commands.Cog):
             return
         await self.check_and_post_reddit(message)
 
-    def getsubpost(self, sublist):
+    async def getsubpost(self, sublist):
         posts = []
-        for submission in sublist:
+        async for submission in sublist:
             if not submission.stickied:
                 posts.append(submission)
         post = random.choice(posts)
         return post
 
-    def getsubpost_sfw(self, sublist):
+    async def getsubpost_sfw(self, sublist):
         posts = []
-        for submission in sublist:
+        async for submission in sublist:
             if not submission.stickied and not submission.over_18:
                 if len(submission.selftext) < 2000:
                     posts.append(submission)
@@ -80,7 +83,8 @@ class Reddit(commands.Cog):
 
     async def post(self, ctx, subname, true_if_top):
         try:
-            subreddit = self.reddit_instance.subreddit(subname)
+            subreddit = await self.reddit_instance.subreddit(subname)
+            await subreddit.load()
         except:
             await ctx.send("That didn't load. Check the subreddit name and try again.")
             return
@@ -89,7 +93,8 @@ class Reddit(commands.Cog):
             if subreddit.over18 and not ctx.channel.is_nsfw():
                 await ctx.send("Go run this in an NSFW channel you degenerate")
                 return
-        except:
+        except Exception as e:
+            print(e)
             await ctx.send(
                 "That didn't work. It's possible the subreddit you're trying to view is banned."
             )
@@ -98,9 +103,9 @@ class Reddit(commands.Cog):
         post = None
 
         if true_if_top:
-            post = self.getsubpost(subreddit.top("day", limit=40))
+            post = await self.getsubpost(subreddit.top("day", limit=40))
         else:
-            post = self.getsubpost(subreddit.hot(limit=40))
+            post = await self.getsubpost(subreddit.hot(limit=40))
 
         print(post.url)
         await ctx.send(embed=self.credits(post))
@@ -134,10 +139,18 @@ class Reddit(commands.Cog):
     @commands.command()
     async def copypasta(self, ctx):
         """To be fair, you have to have a very high IQ to use this command."""
-        subreddit = self.reddit_instance.subreddit("copypasta")
-        post = self.getsubpost_sfw(subreddit.hot(limit=40))
+        subreddit = await self.reddit_instance.subreddit("copypasta")
+        post = await self.getsubpost_sfw(subreddit.hot(limit=40))
         await ctx.send("**{0}**".format(post.title))
         await ctx.send(post.selftext)
+
+    async def signal_handler(self):
+        """
+        Called by bot when it recieves a SIGTERM or SIGINT. For cleanup activities before exiting.
+        """
+        print("Closing connection to reddit...")
+        await self.reddit_instance.close()
+
 
 def setup(bot):
     """

@@ -14,7 +14,7 @@ import discord
 import numpy as np
 from discord.ext import commands
 from PIL import Image
-from utils.configManager import BotConfig, PokemonConfig
+from utils.configManager import PokemonConfig
 from utils.log import log
 
 
@@ -27,7 +27,7 @@ class Pokemon(commands.Cog):
         self.bot = bot
         self.channelStates = {}
         self.config = PokemonConfig()
-        self.botConfig = BotConfig()
+        self.botConfig = bot.config
 
     @commands.group(
         name="pokemon",

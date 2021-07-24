@@ -1,103 +1,118 @@
 ---
 Bot:
-    CommandPrefix: '?'
-    Activity: '?help for help'
-    CogDirectory: cogs
-    Cogs:
-        - anagrams
-        - garlic
-        - pokemon
-        - reddit
-        - misc
+  CommandPrefix: "?"
+  Activity: "?help for help"
+  CogDirectory: cogs
+  Cogs:
+    - anagrams
+    - garlic
+    - pokemon
+    - reddit
+    - misc
+    - bullshit
+    - xkcd
+  Database: dbWingBot
 
 Anagram:
-    Corpus: resources/anagrams/wordList.txt
-    NoOfQuestions: 10
-    QuestionLimit: 50
-    TimeToFirstQuestion: 3
-    TimeToNextQuestion: 6
-    TimePerQuestion: 30
-    TimeToFirstHint: 10
-    TimeToSecondHint: 5
-    TimeToSecondHintShortWords: 13
-    ShortWordLengthCutoff: 7
-    WordsAPI: http://api.datamuse.com/words?sp={word}&qe=sp&md=dp&max=1
+  Corpus: resources/anagrams/wordList.txt
+  NoOfQuestions: 10
+  QuestionLimit: 50
+  TimeToFirstQuestion: 3
+  TimeToNextQuestion: 6
+  TimePerQuestion: 30
+  TimeToFirstHint: 10
+  TimeToSecondHint: 5
+  TimeToSecondHintShortWords: 13
+  ShortWordLengthCutoff: 7
+  WordsAPI: http://api.datamuse.com/words?sp={word}&qe=sp&md=dp&max=1
 
 Garlic:
-    Template: resources/garlic/Template.jpeg
-    DarkTemplate: resources/garlic/DarkTemplate.png
-    Font: resources/garlic/CooperHewitt-Heavy.otf
-    
+  Template: resources/garlic/Template.jpeg
+  DarkTemplate: resources/garlic/DarkTemplate.png
+  Font: resources/garlic/CooperHewitt-Heavy.otf
+
 Reddit:
-    UserAgent: discord:bubot:1.0.0 (by /u/alexaplaymiamidisco)
-    MemeSubs:
-        - dankmemes
-        - rareinsults
-        - tumblr
-        - greentext
-        - fakehistoryporn
-        - antimeme
-    CuteSubs:
-        - aww
-        - woof_irl
-        - meow_irl
-        - eyebleach
-        - rarepuppers
+  UserAgent: discord:bubot:1.0.0 (by /u/alexaplaymiamidisco)
+  MemeSubs:
+    - dankmemes
+    - rareinsults
+    - tumblr
+    - greentext
+    - fakehistoryporn
+    - antimeme
+  CuteSubs:
+    - aww
+    - woof_irl
+    - meow_irl
+    - eyebleach
+    - rarepuppers
 
 Pokemon:
-    NoOfQuestions: 10
-    QuestionLimit: 50
-    TimeToFirstQuestion: 0
-    TimeToNextQuestion: 6
-    TimePerQuestion: 30
-    TimeToFirstHint: 10
-    TimeToSecondHint: 10
-    PokemonDataAPI: https://pokeapi.co/api/v2/pokemon/{id}
-    PokemonSpeciesDataAPI: https://pokeapi.co/api/v2/pokemon-species/{id}
-    PokemonSpriteAPI: https://pokeres.bastionbot.org/images/pokemon/{id}.png
-    PokemonSpriteDirectory: resources/pokemon/sprites
-    BackgroundImage: resources/pokemon/background.png
-    TypeToEmojiMap:
-        normal: ':white_large_square:'
-        fighting: ':boxing_gloves:'
-        flying: ':bird:'
-        poison: ':skull_crossbones:'
-        ground: ':orange_square:'
-        rock: ':moyai:'
-        bug: ':bug:'
-        ghost: ':ghost:'
-        steel: ':shield:'
-        fire: ':fire:'
-        water: ':ocean:'
-        grass: ':herb:'
-        electric: ':zap:'
-        psychic: ':crystal_ball:'
-        ice: ':snowflake:'
-        dragon: ':dragon:'
-        dark: ':new_moon:'
-        fairy: ':fairy:'
-    RegionWiseDex:
-        all:
-            start: 1
-            end: 807
-        kanto:
-            start: 1
-            end: 151
-        johto:
-            start: 152
-            end: 251
-        hoenn:
-            start: 252
-            end: 386
-        sinnoh:
-            start: 387
-            end: 493
-        unova:
-            start: 494
-            end: 649
-        kalos:
-            start: 650
-            end: 721
-        alola:
-            start: 722
-            end: 807
+  NoOfQuestions: 10
+  QuestionLimit: 50
+  TimeToFirstQuestion: 0
+  TimeToNextQuestion: 6
+  TimePerQuestion: 30
+  TimeToFirstHint: 10
+  TimeToSecondHint: 10
+  PokemonDataAPI: https://pokeapi.co/api/v2/pokemon/{id}
+  PokemonSpeciesDataAPI: https://pokeapi.co/api/v2/pokemon-species/{id}
+  PokemonSpriteAPI: https://pokeres.bastionbot.org/images/pokemon/{id}.png
+  PokemonSpriteDirectory: resources/pokemon/sprites
+  BackgroundImage: resources/pokemon/background.png
+  TypeToEmojiMap:
+    normal: ":white_large_square:"
+    fighting: ":boxing_gloves:"
+    flying: ":bird:"
+    poison: ":skull_crossbones:"
+    ground: ":orange_square:"
+    rock: ":moyai:"
+    bug: ":bug:"
+    ghost: ":ghost:"
+    steel: ":shield:"
+    fire: ":fire:"
+    water: ":ocean:"
+    grass: ":herb:"
+    electric: ":zap:"
+    psychic: ":crystal_ball:"
+    ice: ":snowflake:"
+    dragon: ":dragon:"
+    dark: ":new_moon:"
+    fairy: ":fairy:"
+  RegionWiseDex:
+    all:
+      start: 1
+      end: 807
+    kanto:
+      start: 1
+      end: 151
+    johto:
+      start: 152
+      end: 251
+    hoenn:
+      start: 252
+      end: 386
+    sinnoh:
+      start: 387
+      end: 493
+    unova:
+      start: 494
+      end: 649
+    kalos:
+      start: 650
+      end: 721
+    alola:
+      start: 722
+      end: 807
+
+Bullshit:
+  Font: resources/garlic/CooperHewitt-Heavy.otf
+
+Xkcd:
+  RssFeed: https://xkcd.com/rss.xml
+  CurrentComic: https://xkcd.com/info.0.json
+  NthComic: https://xkcd.com/${n}/info.0.json
+  RssCollection: xkcd_rss
+  ExplainUrlForRedirect: https://www.explainxkcd.com/wiki/api.php?action=parse&page=${n}&format=json
+  ExplainUrl: https://www.explainxkcd.com/wiki/api.php?action=parse&page=${title}&prop=wikitext&section=1&format=json
+  ExplainPageUrl: https://www.explainxkcd.com/wiki/index.php/${title}

@@ -6,7 +6,7 @@ from concurrent.futures import CancelledError
 import aiohttp
 import discord
 from discord.ext import commands
-from utils.configManager import AnagramConfig, BotConfig
+from utils.configManager import AnagramConfig
 from utils.log import log
 
 
@@ -19,7 +19,7 @@ class Anagrams(commands.Cog):
         self.bot = bot
         self.channelStates = {}
         self.config = AnagramConfig()
-        self.botConfig = BotConfig()
+        self.botConfig = bot.config
         with open(self.config.corpus) as fp:
             self.corpus = fp.read().splitlines()
         self.corpusHasChanged = False

@@ -1,17 +1,17 @@
 # Wing Bot
 
-A Discord bot to play games, browse reddit, and more!
+A Discord bot to play games, get xkcd updates, browse reddit, and more!
 
-## Getting Started
+## Development
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
 - python-3.8
 - [A Discord token](https://discordpy.readthedocs.io/en/latest/discord.html)
 - [A Reddit application's credentials](https://ssl.reddit.com/prefs/apps/)
-
+- [A mongoDB instance](https://docs.atlas.mongodb.com/getting-started/) and its [connection string](https://docs.mongodb.com/manual/reference/connection-string/)
 
 ### Installing
 
@@ -21,23 +21,26 @@ These instructions will get you a copy of the project up and running on your loc
 pip install -r requirements.txt
 ```
 
+### Configuration
+
 - Create a file named `.env` in the root directory with:
+
 ```
 DISCORD_TOKEN=<your discord token>
 REDDIT_CLIENT_ID=<your reddit app's client ID>
 REDDIT_SECRET=<your reddit app's client secret>
+MONGODB_CONNECTION_STRING=<your mongodb connection string>
 ```
 
-## Deployment
+### Deployment
 
 Run `python wingbot.py` from the root directory.
 
 ## Authors
 
-* **Naveen Unnikrishnan** - *Initial work* - [naveen-u](https://github.com/naveen-u)
-* **Adhitya Mamallan** - *Reddit and polls* - [adhityamamallan](https://github.com/adhityamamallan)
-
+- **Naveen Unnikrishnan** - _Xkcd, anagrams, pokemon, bullshit, and more_ - [naveen-u](https://github.com/naveen-u)
+- **Adhitya Mamallan** - _Reddit and polls_ - [adhityamamallan](https://github.com/adhityamamallan)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
