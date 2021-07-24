@@ -8,6 +8,8 @@ import urlextract
 import urllib
 from discord.ext import commands
 from utils.configManager import BotConfig, RedditConfig
+from utils.log import log
+from utils.redditHelpers import get_subpost, credit_embed
 
 
 class Reddit(commands.Cog):
@@ -40,9 +42,14 @@ class Reddit(commands.Cog):
         try:
             post = await self.reddit_instance.submission(url=url)
         except:
-            print(
-                "INFO: This Reddit URL seems to be invalid. The link might not be prefixed with https://"
+            log(
+                channel.id,
+                "INFO: This Reddit URL seems to be invalid. The link might not be prefixed with https://",
             )
+            return
+
+        if post.over_18 and not channel.is_nsfw():
+            await channel.send("This isn't an NSFW channel you degenerate")
             return
 
         if post.is_self:
@@ -56,59 +63,32 @@ class Reddit(commands.Cog):
             return
         await self.check_and_post_reddit(message)
 
-    async def getsubpost(self, sublist):
-        posts = []
-        async for submission in sublist:
-            if not submission.stickied:
-                posts.append(submission)
-        post = random.choice(posts)
-        return post
-
-    async def getsubpost_sfw(self, sublist):
-        posts = []
-        async for submission in sublist:
-            if not submission.stickied and not submission.over_18:
-                if len(submission.selftext) < 2000:
-                    posts.append(submission)
-        post = random.choice(posts)
-        return post
-
-    def credits(self, post):
-        embed = discord.Embed(
-            title=post.title,
-            description="r/{0}".format(post.subreddit.display_name),
-            url="https://www.reddit.com" + post.permalink,
-        )
-        return embed
-
     async def post(self, ctx, subname, true_if_top):
         try:
             subreddit = await self.reddit_instance.subreddit(subname)
             await subreddit.load()
         except:
-            await ctx.send("That didn't load. Check the subreddit name and try again.")
+            await ctx.send(
+                "That didn't load. Check the subreddit name and try again.\nIf you're spelling it correctly, it's possible the subreddit you're trying to view is banned."
+            )
             return
 
-        try:
-            if subreddit.over18 and not ctx.channel.is_nsfw():
-                await ctx.send("Go run this in an NSFW channel you degenerate")
-                return
-        except Exception as e:
-            print(e)
-            await ctx.send(
-                "That didn't work. It's possible the subreddit you're trying to view is banned."
-            )
+        is_channel_sfw = not ctx.channel.is_nsfw()
+
+        if subreddit.over18 and is_channel_sfw:
+            await ctx.send("Go run this in an NSFW channel you degenerate")
             return
 
         post = None
 
         if true_if_top:
-            post = await self.getsubpost(subreddit.top("day", limit=40))
+            post = await get_subpost(subreddit.top("day", limit=40), is_channel_sfw)
         else:
-            post = await self.getsubpost(subreddit.hot(limit=40))
+            post = await get_subpost(subreddit.hot(limit=40), is_channel_sfw)
 
-        print(post.url)
-        await ctx.send(embed=self.credits(post))
+        log(ctx.channel.id, post.url)
+
+        await ctx.send(embed=credit_embed(post))
         if post.is_self:
             await ctx.send(post.selftext)
         else:
@@ -140,7 +120,7 @@ class Reddit(commands.Cog):
     async def copypasta(self, ctx):
         """To be fair, you have to have a very high IQ to use this command."""
         subreddit = await self.reddit_instance.subreddit("copypasta")
-        post = await self.getsubpost_sfw(subreddit.hot(limit=40))
+        post = await get_subpost(subreddit.hot(limit=40), ctx.channel.is_nsfw())
         await ctx.send("**{0}**".format(post.title))
         await ctx.send(post.selftext)
 
