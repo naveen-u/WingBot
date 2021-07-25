@@ -9,7 +9,41 @@ import urllib
 from discord.ext import commands
 from utils.configManager import BotConfig, RedditConfig
 from utils.log import log
-from utils.redditHelpers import get_subpost, credit_embed
+
+
+def credit_embed(post):
+    """
+    Returns a Discord embed with the post title, subreddit and link to the original post.
+    """
+    embed = discord.Embed(
+        title=post.title,
+        description="r/{0}".format(post.subreddit.display_name),
+        url="https://www.reddit.com" + post.permalink,
+    )
+    return embed
+
+
+async def get_subpost(sublist, is_sfw):
+    """
+    Picks a random post from a list of posts.
+    """
+    posts = []
+    async for submission in sublist:
+        if is_submission_valid(submission, is_sfw):
+            posts.append(submission)
+    post = random.choice(posts)
+    return post
+
+
+def is_submission_valid(submission, is_sfw):
+    """
+    Checks if a Reddit submission is valid.
+    """
+    return (
+        not submission.stickied
+        and len(submission.selftext) < 2000
+        and not (is_sfw and submission.over_18)
+    )
 
 
 class Reddit(commands.Cog):
@@ -28,6 +62,9 @@ class Reddit(commands.Cog):
         )
 
     async def check_and_post_reddit(self, message):
+        """
+        Checks if a Discord message has a valid Reddit URL, and if it does, post its contents into the channel.
+        """
         channel = message.channel
         url = message.content
 
@@ -63,7 +100,10 @@ class Reddit(commands.Cog):
             return
         await self.check_and_post_reddit(message)
 
-    async def post(self, ctx, subname, true_if_top):
+    async def post(self, ctx, subname, should_check_top_posts):
+        """
+        Takes a subreddit name and sends a post from it in the channel.
+        """
         try:
             subreddit = await self.reddit_instance.subreddit(subname)
             await subreddit.load()
@@ -81,7 +121,7 @@ class Reddit(commands.Cog):
 
         post = None
 
-        if true_if_top:
+        if should_check_top_posts:
             post = await get_subpost(subreddit.top("day", limit=40), is_channel_sfw)
         else:
             post = await get_subpost(subreddit.hot(limit=40), is_channel_sfw)
@@ -120,7 +160,7 @@ class Reddit(commands.Cog):
     async def copypasta(self, ctx):
         """To be fair, you have to have a very high IQ to use this command."""
         subreddit = await self.reddit_instance.subreddit("copypasta")
-        post = await get_subpost(subreddit.hot(limit=40), ctx.channel.is_nsfw())
+        post = await get_subpost(subreddit.hot(limit=40), not ctx.channel.is_nsfw())
         await ctx.send("**{0}**".format(post.title))
         await ctx.send(post.selftext)
 
