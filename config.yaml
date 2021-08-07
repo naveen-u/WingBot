@@ -56,7 +56,7 @@ Pokemon:
   TimeToSecondHint: 10
   PokemonDataAPI: https://pokeapi.co/api/v2/pokemon/{id}
   PokemonSpeciesDataAPI: https://pokeapi.co/api/v2/pokemon-species/{id}
-  PokemonSpriteAPI: https://pokeres.bastionbot.org/images/pokemon/{id}.png
+  PokemonSpriteAPI: https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{id}.png
   PokemonSpriteDirectory: resources/pokemon/sprites
   BackgroundImage: resources/pokemon/background.png
   TypeToEmojiMap:
@@ -102,7 +102,10 @@ Pokemon:
       end: 721
     alola:
       start: 722
-      end: 807
+      end: 809
+    galar:
+      start: 810
+      end: 898
 
 Bullshit:
   Font: resources/garlic/CooperHewitt-Heavy.otf
