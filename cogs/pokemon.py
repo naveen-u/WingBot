@@ -1,12 +1,10 @@
 import asyncio
-import json
 import os
 import os.path
 import random
 import re
 import traceback
 import typing
-from concurrent.futures import CancelledError
 from io import BytesIO
 
 import aiohttp
@@ -274,7 +272,7 @@ class Pokemon(commands.Cog):
         askQuestionTask.set_name("pokemon-" + str(ctx.channel.id))
         log(ctx.channel.id, "Pokemon game started.")
 
-    async def fetchSprite(self, id: int, session: object, ctx):
+    async def fetchSprite(self, id: int, session: object, ctx: commands.Context):
         """
         Sends a GET request for a pokemon's sprite and starts a task to create a
         question image.
