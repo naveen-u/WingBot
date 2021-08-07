@@ -1,12 +1,14 @@
-import asyncio
 import os
 import random
-
-import discord
-import asyncpraw
-import urlextract
+import sys
+import traceback
 import urllib
+
+import asyncpraw
+import discord
+import urlextract
 from discord.ext import commands
+from utils.channelUtils import is_nsfw_allowed
 from utils.configManager import BotConfig, RedditConfig
 from utils.log import log
 
@@ -85,7 +87,7 @@ class Reddit(commands.Cog):
             )
             return
 
-        if post.over_18 and not channel.is_nsfw():
+        if post.over_18 and not is_nsfw_allowed(channel):
             await channel.send("This isn't an NSFW channel you degenerate")
             return
 
@@ -113,7 +115,7 @@ class Reddit(commands.Cog):
             )
             return
 
-        is_channel_sfw = not ctx.channel.is_nsfw()
+        is_channel_sfw = not is_nsfw_allowed(ctx.channel)
 
         if subreddit.over18 and is_channel_sfw:
             await ctx.send("Go run this in an NSFW channel you degenerate")
@@ -160,7 +162,9 @@ class Reddit(commands.Cog):
     async def copypasta(self, ctx):
         """To be fair, you have to have a very high IQ to use this command."""
         subreddit = await self.reddit_instance.subreddit("copypasta")
-        post = await get_subpost(subreddit.hot(limit=40), not ctx.channel.is_nsfw())
+        post = await get_subpost(
+            subreddit.hot(limit=40), not is_nsfw_allowed(ctx.channel)
+        )
         await ctx.send("**{0}**".format(post.title))
         await ctx.send(post.selftext)
 
@@ -170,6 +174,40 @@ class Reddit(commands.Cog):
         """
         print("Closing connection to reddit...")
         await self.reddit_instance.close()
+
+    async def cog_command_error(self, ctx, error):
+        """This is triggered when an error is raised while invoking a command in this cog.
+        Parameters
+        ------------
+        ctx: commands.Context
+            The context used for command invocation.
+        error: commands.CommandError
+            The Exception raised.
+        """
+
+        # This prevents any commands with local handlers being handled here in on_command_error.
+        if hasattr(ctx.command, "on_error"):
+            return
+
+        ignored = (commands.CommandNotFound,)
+
+        # Allows us to check for original exceptions raised and sent to CommandInvokeError.
+        # If nothing is found. We keep the exception passed to on_command_error.
+        error = getattr(error, "original", error)
+
+        # Anything in ignored will return and prevent anything happening.
+        if isinstance(error, ignored):
+            return
+
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("You forgot to give me input dumdum!")
+
+        else:
+            # All other Errors not returned come here. And we can just print the default TraceBack.
+            log(f"Ignoring exception in command {ctx.command}: ")
+            traceback.print_exception(
+                type(error), error, error.__traceback__, file=sys.stderr
+            )
 
 
 def setup(bot):
