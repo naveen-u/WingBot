@@ -83,16 +83,6 @@ class Bullshit(commands.Cog):
         await message.delete()
         await ctx.send(file=discord.File("bullshit.png"))
 
-    @bullshit.error
-    async def bullshitError(self, ctx, error):
-        """
-        Error handler for the bullshit command
-        """
-        # if isinstance(error, commands.errors.MissingRequiredArgument):
-        #     await ctx.send("You forgot to give me input dumdum!")
-        # else:
-        log(ctx.channel.id, "Oopsie, exception: ", error)
-
 
 def setup(bot):
     """
