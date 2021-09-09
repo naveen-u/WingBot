@@ -228,3 +228,12 @@ class XkcdConfig(Config):
     @property
     def explain_page_url(self):
         return self.get_property("ExplainPageUrl")
+
+
+class ValheimConfig(Config):
+    def __init__(self):
+        Config.__init__(self, "Valheim")
+
+    @property
+    def server_state_collection(self):
+        return self.get_property("ServerStateCollection")

@@ -10,6 +10,7 @@ Bot:
     - misc
     - bullshit
     - xkcd
+    - valheim
   Database: dbWingBot
 
 Anagram:
@@ -118,3 +119,6 @@ Xkcd:
   ExplainUrlForRedirect: https://www.explainxkcd.com/wiki/api.php?action=parse&page=${n}&format=json
   ExplainUrl: https://www.explainxkcd.com/wiki/api.php?action=parse&page=${title}&prop=wikitext&section=1&format=json
   ExplainPageUrl: https://www.explainxkcd.com/wiki/index.php/${title}
+
+Valheim:
+  ServerStateCollection: valheim_server_state
