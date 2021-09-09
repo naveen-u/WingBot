@@ -21,7 +21,7 @@ class Valheim(commands.Cog):
         invoke_without_command=False,
         case_insensitive=True,
     )
-    async def valheim(self, ctx):
+    async def valheim(self):
         pass
 
     @valheim.command(name="up")
@@ -32,7 +32,7 @@ class Valheim(commands.Cog):
         send_embed = await self.set_server_state(ctx, True)
         if send_embed:
             embed = discord.Embed(
-                title=f"{ctx.author.name} has fired up the server!",
+                title=f"{ctx.author.display_name} has fired up the server!",
                 colour=discord.Colour.green(),
             )
             embed.set_author(
@@ -54,7 +54,7 @@ class Valheim(commands.Cog):
         send_embed = await self.set_server_state(ctx, False)
         if send_embed:
             embed = discord.Embed(
-                title=f"{ctx.author.name} has shut down the server!",
+                title=f"{ctx.author.display_name} has shut down the server!",
                 colour=discord.Colour.red(),
             )
             embed.set_author(
