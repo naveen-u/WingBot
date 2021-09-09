@@ -18,11 +18,11 @@ class Valheim(commands.Cog):
 
     @commands.group(
         name="valheim",
-        invoke_without_command=False,
+        invoke_without_command=True,
         case_insensitive=True,
     )
-    async def valheim(self):
-        pass
+    async def valheim(self, ctx):
+        await ctx.reply("Ruh-roh! That's not a thing. Check `?help Valheim`.")
 
     @valheim.command(name="up")
     async def up(self, ctx: commands.Context):

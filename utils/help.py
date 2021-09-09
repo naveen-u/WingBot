@@ -27,7 +27,7 @@ class HelpCommand(commands.HelpCommand):
         options = ""
         l = []
         for i in cog.walk_commands():
-            if i not in l:
+            if i not in l and i.help is not None:
                 options += (
                     f"`{self.botConfig.commandPrefix}{i.qualified_name}` | {i.help}\n"
                 )
