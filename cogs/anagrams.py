@@ -138,8 +138,8 @@ class Anagrams(commands.Cog):
         if "answer" not in self.channelStates[str(message.channel.id)]:
             return
         if (
-            message.content.lower()
-            == self.channelStates[str(message.channel.id)]["answer"]
+            message.content.casefold()
+            == self.channelStates[str(message.channel.id)]["answer"].casefold()
         ):
             self.channelStates[str(message.channel.id)]["answer"] = None
             await message.add_reaction("\N{THUMBS UP SIGN}")
@@ -157,7 +157,7 @@ class Anagrams(commands.Cog):
                     message.author
                 ] = 1
             embed = discord.Embed(
-                title="The answer was: `" + message.content.lower() + "`",
+                title="The answer was: `" + message.content.upper() + "`",
                 colour=discord.Colour.green(),
             )
             embed.set_author(
@@ -343,7 +343,7 @@ class Anagrams(commands.Cog):
             self.channelStates[str(channel.id)]["details"] = details
             question = self.shuffle_word(word)
             self.channelStates[str(channel.id)]["question"] = discord.Embed(
-                title="`" + question + "`", colour=discord.Colour.blue()
+                title=question, colour=discord.Colour.blue()
             )
             if "questionNumber" not in self.channelStates[str(channel.id)]:
                 self.channelStates[str(channel.id)]["questionNumber"] = 1
@@ -435,7 +435,7 @@ class Anagrams(commands.Cog):
             elif self.channelStates[str(channel.id)]["question"].fields == []:
                 self.channelStates[str(channel.id)]["question"].add_field(
                     name="First letter",
-                    value=self.channelStates[str(channel.id)]["answer"][0],
+                    value=self.shuffle_word(self.channelStates[str(channel.id)]["answer"][0]),
                     inline=True,
                 )
                 await channel.send(
@@ -569,7 +569,7 @@ class Anagrams(commands.Cog):
         """
         word = list(word)
         random.shuffle(word)
-        return "".join(word)
+        return " ".join([(":regional_indicator_%s:" % letter) for letter in word])
 
     def cleanCorpus(self):
         """
