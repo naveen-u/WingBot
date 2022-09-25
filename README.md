@@ -8,7 +8,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-- python-3.8
+- python-3.8 or newer
 - [A Discord token](https://discordpy.readthedocs.io/en/latest/discord.html)
 - [A Reddit application's credentials](https://ssl.reddit.com/prefs/apps/)
 - [A mongoDB instance](https://docs.atlas.mongodb.com/getting-started/) and its [connection string](https://docs.mongodb.com/manual/reference/connection-string/)
